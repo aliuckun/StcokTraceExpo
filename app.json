@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "StockTracker",
-    "slug": "StockTracker",
+    "slug": "stocktakipexpo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,10 +21,21 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.summer053.stocktakipexpo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4a5d0bbd-6265-44cc-bfcd-7dfe63f7a72b"
+      }
+    },
+    "owner": "summer053"
   }
 }
