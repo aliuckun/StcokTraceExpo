@@ -17,6 +17,8 @@ export default function StockDetailScreen() {
     const [selectedTrade, setSelectedTrade] = useState<TradeAction | null>(null);
     const [direction, setDirection] = useState<'LONG' | 'SHORT'>('LONG');
     const [buyPrice, setBuyPrice] = useState('');
+    const [stopLoss, setStopLoss] = useState('');
+    const [takeProfit, setTakeProfit] = useState('');
     const [sellPrice, setSellPrice] = useState('');
 
     useEffect(() => {
@@ -49,6 +51,8 @@ export default function StockDetailScreen() {
             position: 'OPEN',
             entryDate: new Date().toISOString(),
             buyPrice: Number(buyPrice),
+            stopLoss: stopLoss ? Number(stopLoss) : undefined,
+            takeProfit: takeProfit ? Number(takeProfit) : undefined,
         };
 
         const updatedStock = {
@@ -58,6 +62,8 @@ export default function StockDetailScreen() {
 
         await upsertStock(updatedStock);
         setBuyPrice('');
+        setStopLoss('');
+        setTakeProfit('');
         setIsAddModalVisible(false);
         loadStockData();
     };
@@ -145,7 +151,7 @@ export default function StockDetailScreen() {
             {/* MODAL 1: YENİ İŞLEM EKLEME */}
             <Modal visible={isAddModalVisible} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+                    <View style={styles.modalContentLarge}>
                         <Text style={styles.modalHeader}>Yeni İşlem Aç</Text>
                         <View style={styles.typeContainer}>
                             <TouchableOpacity
@@ -163,17 +169,38 @@ export default function StockDetailScreen() {
                         </View>
                         <TextInput
                             style={styles.input}
-                            placeholder="Giriş Fiyatı (₺)"
+                            placeholder="Giriş Fiyatı (₺) *"
                             keyboardType="decimal-pad"
                             value={buyPrice}
                             onChangeText={setBuyPrice}
+                            placeholderTextColor="#999"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Stop Loss (₺) - Opsiyonel"
+                            keyboardType="decimal-pad"
+                            value={stopLoss}
+                            onChangeText={setStopLoss}
+                            placeholderTextColor="#999"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Take Profit / Hedef (₺) - Opsiyonel"
+                            keyboardType="decimal-pad"
+                            value={takeProfit}
+                            onChangeText={setTakeProfit}
                             placeholderTextColor="#999"
                         />
                         <View style={styles.modalButtons}>
                             <TouchableOpacity style={styles.saveBtn} onPress={handleAddTrade}>
                                 <Text style={styles.whiteBtnText}>İŞLEMİ BAŞLAT</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddModalVisible(false)}>
+                            <TouchableOpacity style={styles.cancelBtn} onPress={() => {
+                                setIsAddModalVisible(false);
+                                setBuyPrice('');
+                                setStopLoss('');
+                                setTakeProfit('');
+                            }}>
                                 <Text style={styles.darkBtnText}>İPTAL</Text>
                             </TouchableOpacity>
                         </View>
@@ -188,9 +215,35 @@ export default function StockDetailScreen() {
                         <Text style={styles.modalHeader}>İşlem Detayları</Text>
                         {selectedTrade && (
                             <View style={styles.modalBody}>
-                                <View style={styles.row}><Text>Yön:</Text><Text style={{ fontWeight: 'bold' }}>{selectedTrade.direction}</Text></View>
-                                <View style={styles.row}><Text>Giriş Fiyatı:</Text><Text style={{ fontWeight: 'bold' }}>{selectedTrade.buyPrice} ₺</Text></View>
-                                <View style={styles.row}><Text>Durum:</Text><Text style={{ fontWeight: 'bold' }}>{selectedTrade.position === 'OPEN' ? 'Açık' : 'Kapalı'}</Text></View>
+                                <View style={styles.row}>
+                                    <Text>Yön:</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>{selectedTrade.direction}</Text>
+                                </View>
+                                <View style={styles.row}>
+                                    <Text>Giriş Fiyatı:</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>{selectedTrade.buyPrice} ₺</Text>
+                                </View>
+
+                                <View style={styles.row}>
+                                    <Text>Stop Loss:</Text>
+                                    <Text style={{ fontWeight: 'bold', color: selectedTrade.stopLoss ? '#e74c3c' : '#999' }}>
+                                        {selectedTrade.stopLoss ? `${selectedTrade.stopLoss} ₺` : 'Belirlenmedi'}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.row}>
+                                    <Text>Take Profit:</Text>
+                                    <Text style={{ fontWeight: 'bold', color: selectedTrade.takeProfit ? '#2ecc71' : '#999' }}>
+                                        {selectedTrade.takeProfit ? `${selectedTrade.takeProfit} ₺` : 'Belirlenmedi'}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.row}>
+                                    <Text>Durum:</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>
+                                        {selectedTrade.position === 'OPEN' ? 'Açık' : 'Kapalı'}
+                                    </Text>
+                                </View>
 
                                 {selectedTrade.position === 'OPEN' ? (
                                     <View style={{ marginTop: 10 }}>
@@ -211,8 +264,19 @@ export default function StockDetailScreen() {
                                     </View>
                                 ) : (
                                     <>
-                                        <View style={styles.row}><Text>Çıkış Fiyatı:</Text><Text style={{ fontWeight: 'bold' }}>{selectedTrade.sellPrice} ₺</Text></View>
-                                        <View style={styles.row}><Text>Kâr/Zarar:</Text><Text style={{ fontWeight: 'bold', color: (selectedTrade.profitValue || 0) >= 0 ? '#2ecc71' : '#e74c3c' }}>{selectedTrade.profitValue?.toFixed(2)} ₺</Text></View>
+                                        <View style={styles.row}>
+                                            <Text>Çıkış Fiyatı:</Text>
+                                            <Text style={{ fontWeight: 'bold' }}>{selectedTrade.sellPrice} ₺</Text>
+                                        </View>
+                                        <View style={styles.row}>
+                                            <Text>Kâr/Zarar:</Text>
+                                            <Text style={{
+                                                fontWeight: 'bold',
+                                                color: (selectedTrade.profitValue || 0) >= 0 ? '#2ecc71' : '#e74c3c'
+                                            }}>
+                                                {selectedTrade.profitValue?.toFixed(2)} ₺
+                                            </Text>
+                                        </View>
                                     </>
                                 )}
 
@@ -220,11 +284,19 @@ export default function StockDetailScreen() {
                                     style={{ marginTop: 15, padding: 10 }}
                                     onPress={() => handleDeleteTrade(selectedTrade.id)}
                                 >
-                                    <Text style={{ color: '#e74c3c', textAlign: 'center', fontWeight: 'bold' }}>İŞLEMİ SİL</Text>
+                                    <Text style={{ color: '#e74c3c', textAlign: 'center', fontWeight: 'bold' }}>
+                                        İŞLEMİ SİL
+                                    </Text>
                                 </TouchableOpacity>
                             </View>
                         )}
-                        <TouchableOpacity style={[styles.cancelBtn, { marginTop: 10 }]} onPress={() => { setSelectedTrade(null); setSellPrice(''); }}>
+                        <TouchableOpacity
+                            style={[styles.cancelBtn, { marginTop: 10 }]}
+                            onPress={() => {
+                                setSelectedTrade(null);
+                                setSellPrice('');
+                            }}
+                        >
                             <Text style={styles.darkBtnText}>GERİ DÖN / KAPAT</Text>
                         </TouchableOpacity>
                     </View>
@@ -240,21 +312,102 @@ const styles = StyleSheet.create({
     title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
     subtitle: { fontSize: 16, color: '#666' },
     emptyText: { textAlign: 'center', marginTop: 50, color: '#999' },
-    fab: { position: 'absolute', right: 20, bottom: 30, backgroundColor: '#3b82f6', width: 56, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', elevation: 5 },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-    modalContent: { backgroundColor: '#fff', borderRadius: 20, padding: 25, width: '90%', alignSelf: 'center' },
-    modalHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#333' },
+    fab: {
+        position: 'absolute',
+        right: 20,
+        bottom: 30,
+        backgroundColor: '#3b82f6',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: 20
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 25,
+        width: '90%',
+        alignSelf: 'center',
+        maxHeight: '70%'
+    },
+    modalContentLarge: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 25,
+        width: '90%',
+        alignSelf: 'center',
+        maxHeight: '80%'
+    },
+    modalHeader: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+        color: '#333'
+    },
     modalBody: { gap: 10 },
-    row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 10,
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#eee'
+    },
     typeContainer: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-    typeBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', alignItems: 'center' },
+    typeBtn: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        alignItems: 'center'
+    },
     longActive: { backgroundColor: '#2ecc71', borderColor: '#2ecc71' },
     shortActive: { backgroundColor: '#e74c3c', borderColor: '#e74c3c' },
     typeText: { fontWeight: '600', color: '#666' },
-    input: { backgroundColor: '#f5f5f5', padding: 15, borderRadius: 12, fontSize: 16, marginBottom: 15, color: '#000', borderWidth: 1, borderColor: '#eee' },
+    input: {
+        backgroundColor: '#f5f5f5',
+        padding: 15,
+        borderRadius: 12,
+        fontSize: 16,
+        marginBottom: 15,
+        color: '#000',
+        borderWidth: 1,
+        borderColor: '#eee'
+    },
     modalButtons: { gap: 10, marginTop: 5 },
-    cancelBtn: { width: '100%', padding: 16, alignItems: 'center', borderRadius: 12, backgroundColor: '#eee' },
-    saveBtn: { width: '100%', padding: 16, alignItems: 'center', borderRadius: 12, backgroundColor: '#3b82f6' },
-    whiteBtnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15, textAlign: 'center' },
-    darkBtnText: { color: '#333333', fontWeight: 'bold', fontSize: 15, textAlign: 'center' }
+    cancelBtn: {
+        width: '100%',
+        padding: 16,
+        alignItems: 'center',
+        borderRadius: 12,
+        backgroundColor: '#eee'
+    },
+    saveBtn: {
+        width: '100%',
+        padding: 16,
+        alignItems: 'center',
+        borderRadius: 12,
+        backgroundColor: '#3b82f6'
+    },
+    whiteBtnText: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontSize: 15,
+        textAlign: 'center'
+    },
+    darkBtnText: {
+        color: '#333333',
+        fontWeight: 'bold',
+        fontSize: 15,
+        textAlign: 'center'
+    }
 });

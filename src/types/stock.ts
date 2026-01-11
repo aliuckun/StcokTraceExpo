@@ -18,6 +18,8 @@ export interface TradeAction {
     stockSymbol: string;      // Hangi hisseye ait olduğu
     direction: TradeDirection; // LONG veya SHORT
     buyPrice: number;         // Giriş (Açılış) fiyatı
+    stopLoss?: number;        // Zarar durdurma fiyatı
+    takeProfit?: number;      // Hedef kâr fiyatı (Sell hedefi)
     sellPrice?: number;       // Çıkış (Kapanış) fiyatı
     position: PositionStatus;  // Açık mı, Kapalı mı?
     entryDate: Date | string;  // Pozisyona giriş tarihi
