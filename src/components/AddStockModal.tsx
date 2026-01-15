@@ -17,6 +17,7 @@ interface AddStockModalProps {
     onSave: (stock: Stock) => void;
 }
 
+// Stock objesi açarak yeni bir kart tanımlar
 export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose, onSave }) => {
     const [symbol, setSymbol] = useState('');
     const [name, setName] = useState('');
@@ -28,7 +29,7 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose
             id: Date.now().toString(),
             symbol: symbol.toUpperCase().trim(),
             name: name.trim(),
-            history: [], // Yeni hisse defter kaydı boş başlar
+            history: [],
         };
 
         onSave(newStock);

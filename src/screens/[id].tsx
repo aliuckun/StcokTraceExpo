@@ -1,42 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Modal, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
-import { getStocks, upsertStock } from '../services/storage';
+
+// Yeni Servislerimiz
+import { StockService } from '../services/stock/stock.service';
+import { TradeService } from '../services/stock/trade.service';
+
 import { TradeActionCard } from '../components/TradeActionCard';
 import { Stock, TradeAction } from '../types/stock';
 
 export default function StockDetailScreen() {
     const route = useRoute();
-    const navigation = useNavigation();
     const { id } = route.params as { id: string };
 
     const [stock, setStock] = useState<Stock | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedTrade, setSelectedTrade] = useState<TradeAction | null>(null);
+
+    // Form States
     const [direction, setDirection] = useState<'LONG' | 'SHORT'>('LONG');
     const [buyPrice, setBuyPrice] = useState('');
     const [stopLoss, setStopLoss] = useState('');
     const [takeProfit, setTakeProfit] = useState('');
     const [sellPrice, setSellPrice] = useState('');
 
-    useEffect(() => {
-        loadStockData();
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        const data = await StockService.getById(id);
+        setStock(data || null);
+        setLoading(false);
     }, [id]);
 
-    const loadStockData = async () => {
-        setLoading(true);
-        const allStocks = await getStocks();
-        const currentStock = allStocks.find(s => s.id === id);
-        if (currentStock) {
-            currentStock.history.sort((a, b) =>
-                new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
-            );
-            setStock(currentStock);
-        }
-        setLoading(false);
-    };
+    useEffect(() => { loadData(); }, [loadData]);
 
     const handleAddTrade = async () => {
         if (!buyPrice || isNaN(Number(buyPrice)) || !stock) {
@@ -55,70 +52,40 @@ export default function StockDetailScreen() {
             takeProfit: takeProfit ? Number(takeProfit) : undefined,
         };
 
-        const updatedStock = {
-            ...stock,
-            history: [...stock.history, newTrade]
-        };
-
-        await upsertStock(updatedStock);
-        setBuyPrice('');
-        setStopLoss('');
-        setTakeProfit('');
-        setIsAddModalVisible(false);
-        loadStockData();
+        await TradeService.addTrade(id, newTrade);
+        resetAddForm();
+        loadData();
     };
 
-    const handleDeleteTrade = async (tradeId: string) => {
-        if (!stock) return;
+    const handleClosePosition = async () => {
+        if (!sellPrice || isNaN(Number(sellPrice)) || !selectedTrade) return;
 
+        await TradeService.closePosition(id, selectedTrade.id, Number(sellPrice));
+        setSelectedTrade(null);
+        setSellPrice('');
+        loadData();
+    };
+
+    const handleDeleteTrade = (tradeId: string) => {
         Alert.alert("İşlemi Sil", "Bu kaydı silmek istediğinize emin misiniz?", [
             { text: "Vazgeç", style: "cancel" },
             {
                 text: "Sil",
                 style: "destructive",
                 onPress: async () => {
-                    const updatedHistory = stock.history.filter(t => t.id !== tradeId);
-                    const updatedStock = { ...stock, history: updatedHistory };
-                    await upsertStock(updatedStock);
+                    await TradeService.removeTrade(id, tradeId);
                     setSelectedTrade(null);
-                    loadStockData();
+                    loadData();
                 }
             }
         ]);
     };
 
-    const handleClosePosition = async () => {
-        if (!sellPrice || isNaN(Number(sellPrice)) || !selectedTrade || !stock) {
-            Alert.alert("Hata", "Lütfen geçerli bir çıkış fiyatı girin.");
-            return;
-        }
-
-        const price = Number(sellPrice);
-        let profit = 0;
-        if (selectedTrade.direction === 'LONG') {
-            profit = price - selectedTrade.buyPrice;
-        } else {
-            profit = selectedTrade.buyPrice - price;
-        }
-
-        const updatedHistory = stock.history.map(t => {
-            if (t.id === selectedTrade.id) {
-                return {
-                    ...t,
-                    position: 'CLOSED' as const,
-                    sellPrice: price,
-                    exitDate: new Date().toISOString(),
-                    profitValue: profit
-                };
-            }
-            return t;
-        });
-
-        const updatedStock = { ...stock, history: updatedHistory };
-        await upsertStock(updatedStock);
-        setSelectedTrade(null);
-        setSellPrice('');
-        loadStockData();
+    const resetAddForm = () => {
+        setBuyPrice('');
+        setStopLoss('');
+        setTakeProfit('');
+        setIsAddModalVisible(false);
     };
 
     if (loading) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
@@ -126,6 +93,7 @@ export default function StockDetailScreen() {
 
     return (
         <View style={styles.container}>
+            {/* Header & FlatList içeriği aynı kalıyor... */}
             <View style={styles.header}>
                 <Text style={styles.title}>{stock.symbol} Detayı</Text>
                 <Text style={styles.subtitle}>{stock.name}</Text>

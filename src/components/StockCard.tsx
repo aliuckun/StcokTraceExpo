@@ -14,6 +14,7 @@ export const StockCard: React.FC<StockCardProps> = ({ stock }) => {
     const hasOpenPosition = stock.history.some((trade) => trade.position === 'OPEN');
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
+    // İşlem açık olunca animasyon çıkması
     useEffect(() => {
         if (hasOpenPosition) {
             Animated.loop(
