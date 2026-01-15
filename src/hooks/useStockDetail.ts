@@ -4,6 +4,7 @@ import { Stock, TradeAction } from '../types/stock';
 import { StockService } from '../services/stock/stock.service';
 import { TradeService } from '../services/stock/trade.service';
 
+// hisselerin gecmis islemlerini tutan detail sayfasının buton kodları
 export const useStockDetail = (stockId: string) => {
     const [stock, setStock] = useState<Stock | null>(null);
     const [loading, setLoading] = useState(true);
@@ -17,15 +18,18 @@ export const useStockDetail = (stockId: string) => {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    const addTrade = async (tradeData: Omit<TradeAction, 'id' | 'stockSymbol' | 'entryDate' | 'position'>) => {
+    const addTrade = async (tradeData: { direction: 'LONG' | 'SHORT', buyPrice: number, stopLoss?: number, takeProfit?: number }) => {
         if (!stock) return;
 
         const newTrade: TradeAction = {
-            ...tradeData,
             id: Date.now().toString(),
             stockSymbol: stock.symbol,
-            entryDate: new Date().toISOString(),
+            direction: tradeData.direction,
             position: 'OPEN',
+            entryDate: new Date().toISOString(),
+            buyPrice: tradeData.buyPrice,
+            stopLoss: tradeData.stopLoss,
+            takeProfit: tradeData.takeProfit,
         };
 
         await TradeService.addTrade(stockId, newTrade);
@@ -45,11 +49,6 @@ export const useStockDetail = (stockId: string) => {
     return {
         stock,
         loading,
-        actions: {
-            addTrade,
-            closePosition,
-            deleteTrade,
-            refresh: loadData
-        }
+        actions: { addTrade, closePosition, deleteTrade, refresh: loadData }
     };
 };

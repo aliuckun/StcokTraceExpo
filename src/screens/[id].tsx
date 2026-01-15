@@ -1,99 +1,86 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Modal, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
 
-// Yeni Servislerimiz
-import { StockService } from '../services/stock/stock.service';
-import { TradeService } from '../services/stock/trade.service';
+// Custom Hook Import
+import { useStockDetail } from '../hooks/useStockDetail';
 
 import { TradeActionCard } from '../components/TradeActionCard';
-import { Stock, TradeAction } from '../types/stock';
+import { TradeAction } from '../types/stock';
 
 export default function StockDetailScreen() {
     const route = useRoute();
     const { id } = route.params as { id: string };
 
-    const [stock, setStock] = useState<Stock | null>(null);
-    const [loading, setLoading] = useState(true);
+    // Tüm veri çekme ve işlem mantığı hook içinde
+    const { stock, loading, actions } = useStockDetail(id);
+
+    // UI States (Modallar ve Formlar için)
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedTrade, setSelectedTrade] = useState<TradeAction | null>(null);
 
-    // Form States
+    // Yeni İşlem Form State'leri
     const [direction, setDirection] = useState<'LONG' | 'SHORT'>('LONG');
     const [buyPrice, setBuyPrice] = useState('');
     const [stopLoss, setStopLoss] = useState('');
     const [takeProfit, setTakeProfit] = useState('');
+
+    // Pozisyon Kapatma State'i
     const [sellPrice, setSellPrice] = useState('');
 
-    const loadData = useCallback(async () => {
-        setLoading(true);
-        const data = await StockService.getById(id);
-        setStock(data || null);
-        setLoading(false);
-    }, [id]);
-
-    useEffect(() => { loadData(); }, [loadData]);
-
-    const handleAddTrade = async () => {
-        if (!buyPrice || isNaN(Number(buyPrice)) || !stock) {
+    // HANDLERS
+    const onAddTradeSubmit = async () => {
+        if (!buyPrice || isNaN(Number(buyPrice))) {
             Alert.alert("Hata", "Lütfen geçerli bir giriş fiyatı girin.");
             return;
         }
 
-        const newTrade: TradeAction = {
-            id: Date.now().toString(),
-            stockSymbol: stock.symbol,
+        await actions.addTrade({
             direction,
-            position: 'OPEN',
-            entryDate: new Date().toISOString(),
             buyPrice: Number(buyPrice),
             stopLoss: stopLoss ? Number(stopLoss) : undefined,
             takeProfit: takeProfit ? Number(takeProfit) : undefined,
-        };
+        });
 
-        await TradeService.addTrade(id, newTrade);
-        resetAddForm();
-        loadData();
-    };
-
-    const handleClosePosition = async () => {
-        if (!sellPrice || isNaN(Number(sellPrice)) || !selectedTrade) return;
-
-        await TradeService.closePosition(id, selectedTrade.id, Number(sellPrice));
-        setSelectedTrade(null);
-        setSellPrice('');
-        loadData();
-    };
-
-    const handleDeleteTrade = (tradeId: string) => {
-        Alert.alert("İşlemi Sil", "Bu kaydı silmek istediğinize emin misiniz?", [
-            { text: "Vazgeç", style: "cancel" },
-            {
-                text: "Sil",
-                style: "destructive",
-                onPress: async () => {
-                    await TradeService.removeTrade(id, tradeId);
-                    setSelectedTrade(null);
-                    loadData();
-                }
-            }
-        ]);
-    };
-
-    const resetAddForm = () => {
+        // Formu sıfırla
         setBuyPrice('');
         setStopLoss('');
         setTakeProfit('');
         setIsAddModalVisible(false);
     };
 
+    const onClosePositionSubmit = async () => {
+        if (!sellPrice || isNaN(Number(sellPrice)) || !selectedTrade) return;
+
+        await actions.closePosition(selectedTrade.id, Number(sellPrice));
+        setSelectedTrade(null);
+        setSellPrice('');
+    };
+
+    const onDeleteTradeClick = (tradeId: string) => {
+        Alert.alert("İşlemi Sil", "Bu kaydı silmek istediğinize emin misiniz?", [
+            { text: "Vazgeç", style: "cancel" },
+            {
+                text: "Sil",
+                style: "destructive",
+                onPress: async () => {
+                    await actions.deleteTrade(tradeId);
+                    setSelectedTrade(null);
+                }
+            }
+        ]);
+    };
+
     if (loading) return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
-    if (!stock) return <Text style={styles.emptyText}>Hisse bulunamadı.</Text>;
+    if (!stock) return (
+        <View style={styles.container}>
+            <Text style={styles.emptyText}>Hisse verisi yüklenemedi.</Text>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
-            {/* Header & FlatList içeriği aynı kalıyor... */}
             <View style={styles.header}>
                 <Text style={styles.title}>{stock.symbol} Detayı</Text>
                 <Text style={styles.subtitle}>{stock.name}</Text>
@@ -160,15 +147,10 @@ export default function StockDetailScreen() {
                             placeholderTextColor="#999"
                         />
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity style={styles.saveBtn} onPress={handleAddTrade}>
+                            <TouchableOpacity style={styles.saveBtn} onPress={onAddTradeSubmit}>
                                 <Text style={styles.whiteBtnText}>İŞLEMİ BAŞLAT</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.cancelBtn} onPress={() => {
-                                setIsAddModalVisible(false);
-                                setBuyPrice('');
-                                setStopLoss('');
-                                setTakeProfit('');
-                            }}>
+                            <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddModalVisible(false)}>
                                 <Text style={styles.darkBtnText}>İPTAL</Text>
                             </TouchableOpacity>
                         </View>
@@ -192,27 +174,6 @@ export default function StockDetailScreen() {
                                     <Text style={{ fontWeight: 'bold' }}>{selectedTrade.buyPrice} ₺</Text>
                                 </View>
 
-                                <View style={styles.row}>
-                                    <Text>Stop Loss:</Text>
-                                    <Text style={{ fontWeight: 'bold', color: selectedTrade.stopLoss ? '#e74c3c' : '#999' }}>
-                                        {selectedTrade.stopLoss ? `${selectedTrade.stopLoss} ₺` : 'Belirlenmedi'}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.row}>
-                                    <Text>Take Profit:</Text>
-                                    <Text style={{ fontWeight: 'bold', color: selectedTrade.takeProfit ? '#2ecc71' : '#999' }}>
-                                        {selectedTrade.takeProfit ? `${selectedTrade.takeProfit} ₺` : 'Belirlenmedi'}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.row}>
-                                    <Text>Durum:</Text>
-                                    <Text style={{ fontWeight: 'bold' }}>
-                                        {selectedTrade.position === 'OPEN' ? 'Açık' : 'Kapalı'}
-                                    </Text>
-                                </View>
-
                                 {selectedTrade.position === 'OPEN' ? (
                                     <View style={{ marginTop: 10 }}>
                                         <TextInput
@@ -225,32 +186,26 @@ export default function StockDetailScreen() {
                                         />
                                         <TouchableOpacity
                                             style={[styles.saveBtn, { backgroundColor: '#e67e22' }]}
-                                            onPress={handleClosePosition}
+                                            onPress={onClosePositionSubmit}
                                         >
                                             <Text style={styles.whiteBtnText}>POZİSYONU KAPAT</Text>
                                         </TouchableOpacity>
                                     </View>
                                 ) : (
-                                    <>
-                                        <View style={styles.row}>
-                                            <Text>Çıkış Fiyatı:</Text>
-                                            <Text style={{ fontWeight: 'bold' }}>{selectedTrade.sellPrice} ₺</Text>
-                                        </View>
-                                        <View style={styles.row}>
-                                            <Text>Kâr/Zarar:</Text>
-                                            <Text style={{
-                                                fontWeight: 'bold',
-                                                color: (selectedTrade.profitValue || 0) >= 0 ? '#2ecc71' : '#e74c3c'
-                                            }}>
-                                                {selectedTrade.profitValue?.toFixed(2)} ₺
-                                            </Text>
-                                        </View>
-                                    </>
+                                    <View style={styles.row}>
+                                        <Text>Kâr/Zarar:</Text>
+                                        <Text style={{
+                                            fontWeight: 'bold',
+                                            color: (selectedTrade.profitValue || 0) >= 0 ? '#2ecc71' : '#e74c3c'
+                                        }}>
+                                            {selectedTrade.profitValue?.toFixed(2)} ₺
+                                        </Text>
+                                    </View>
                                 )}
 
                                 <TouchableOpacity
                                     style={{ marginTop: 15, padding: 10 }}
-                                    onPress={() => handleDeleteTrade(selectedTrade.id)}
+                                    onPress={() => onDeleteTradeClick(selectedTrade.id)}
                                 >
                                     <Text style={{ color: '#e74c3c', textAlign: 'center', fontWeight: 'bold' }}>
                                         İŞLEMİ SİL
@@ -260,12 +215,9 @@ export default function StockDetailScreen() {
                         )}
                         <TouchableOpacity
                             style={[styles.cancelBtn, { marginTop: 10 }]}
-                            onPress={() => {
-                                setSelectedTrade(null);
-                                setSellPrice('');
-                            }}
+                            onPress={() => setSelectedTrade(null)}
                         >
-                            <Text style={styles.darkBtnText}>GERİ DÖN / KAPAT</Text>
+                            <Text style={styles.darkBtnText}>KAPAT</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -276,106 +228,30 @@ export default function StockDetailScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fcfcfc', padding: 20 },
-    header: { marginBottom: 25, marginTop: 10 },
+    header: { marginBottom: 25, marginTop: 40 },
     title: { fontSize: 28, fontWeight: 'bold', color: '#1a1a1a' },
     subtitle: { fontSize: 16, color: '#666' },
     emptyText: { textAlign: 'center', marginTop: 50, color: '#999' },
     fab: {
-        position: 'absolute',
-        right: 20,
-        bottom: 30,
-        backgroundColor: '#3b82f6',
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5
+        position: 'absolute', right: 20, bottom: 30, backgroundColor: '#3b82f6',
+        width: 56, height: 56, borderRadius: 28, justifyContent: 'center',
+        alignItems: 'center', elevation: 5
     },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        padding: 20
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 25,
-        width: '90%',
-        alignSelf: 'center',
-        maxHeight: '70%'
-    },
-    modalContentLarge: {
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 25,
-        width: '90%',
-        alignSelf: 'center',
-        maxHeight: '80%'
-    },
-    modalHeader: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-        color: '#333'
-    },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+    modalContent: { backgroundColor: '#fff', borderRadius: 20, padding: 25, width: '90%', alignSelf: 'center' },
+    modalContentLarge: { backgroundColor: '#fff', borderRadius: 20, padding: 25, width: '90%', alignSelf: 'center' },
+    modalHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#333' },
     modalBody: { gap: 10 },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#eee'
-    },
+    row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
     typeContainer: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-    typeBtn: {
-        flex: 1,
-        padding: 12,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        alignItems: 'center'
-    },
+    typeBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', alignItems: 'center' },
     longActive: { backgroundColor: '#2ecc71', borderColor: '#2ecc71' },
     shortActive: { backgroundColor: '#e74c3c', borderColor: '#e74c3c' },
     typeText: { fontWeight: '600', color: '#666' },
-    input: {
-        backgroundColor: '#f5f5f5',
-        padding: 15,
-        borderRadius: 12,
-        fontSize: 16,
-        marginBottom: 15,
-        color: '#000',
-        borderWidth: 1,
-        borderColor: '#eee'
-    },
+    input: { backgroundColor: '#f5f5f5', padding: 15, borderRadius: 12, fontSize: 16, marginBottom: 15, color: '#000', borderWidth: 1, borderColor: '#eee' },
     modalButtons: { gap: 10, marginTop: 5 },
-    cancelBtn: {
-        width: '100%',
-        padding: 16,
-        alignItems: 'center',
-        borderRadius: 12,
-        backgroundColor: '#eee'
-    },
-    saveBtn: {
-        width: '100%',
-        padding: 16,
-        alignItems: 'center',
-        borderRadius: 12,
-        backgroundColor: '#3b82f6'
-    },
-    whiteBtnText: {
-        color: '#FFFFFF',
-        fontWeight: 'bold',
-        fontSize: 15,
-        textAlign: 'center'
-    },
-    darkBtnText: {
-        color: '#333333',
-        fontWeight: 'bold',
-        fontSize: 15,
-        textAlign: 'center'
-    }
+    cancelBtn: { width: '100%', padding: 16, alignItems: 'center', borderRadius: 12, backgroundColor: '#eee' },
+    saveBtn: { width: '100%', padding: 16, alignItems: 'center', borderRadius: 12, backgroundColor: '#3b82f6' },
+    whiteBtnText: { color: '#FFFFFF', fontWeight: 'bold', textAlign: 'center' },
+    darkBtnText: { color: '#333333', fontWeight: 'bold', textAlign: 'center' }
 });
