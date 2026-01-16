@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Animated, LayoutAnimation, Alert } from 'react-native';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Animated, LayoutAnimation } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import { Stock } from '../types/stock';
 import { StockService } from '../services/stock/stock.service';
 
-// ana sayfanın buton kodları 
 export const useStocks = () => {
     const [stocks, setStocks] = useState<Stock[]>([]);
+    const [searchQuery, setSearchQuery] = useState(''); // Arama state'i
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const isFocused = useIsFocused();
     const animRefs = useRef<{ [key: string]: Animated.Value }>({});
@@ -24,6 +24,27 @@ export const useStocks = () => {
     useEffect(() => {
         if (isFocused) loadData();
     }, [isFocused, loadData]);
+
+    // FİLTRELEME VE SIRALAMA MANTIĞI
+    const filteredStocks = useMemo(() => {
+        let result = [...stocks];
+
+        // 1. Arama Filtresi
+        if (searchQuery.trim()) {
+            const query = searchQuery.toUpperCase().trim();
+            result = result.filter(s =>
+                s.symbol.toUpperCase().includes(query) ||
+                s.name.toUpperCase().includes(query)
+            );
+        }
+
+        // 2. Akıllı Sıralama (Açık işlemi olanlar en üste)
+        return result.sort((a, b) => {
+            const aHasOpen = a.history.some(t => t.position === 'OPEN') ? 1 : 0;
+            const bHasOpen = b.history.some(t => t.position === 'OPEN') ? 1 : 0;
+            return bHasOpen - aHasOpen; // 1 olanlar (açık işlem) üste çıkar
+        });
+    }, [stocks, searchQuery]);
 
     const addStock = async (symbol: string, name: string) => {
         const newStock: Stock = {
@@ -60,7 +81,9 @@ export const useStocks = () => {
     };
 
     return {
-        stocks,
+        stocks: filteredStocks, // Artık dışarıya filtrelenmiş listeyi veriyoruz
+        searchQuery,
+        setSearchQuery,
         deletingId,
         setDeletingId,
         animRefs,

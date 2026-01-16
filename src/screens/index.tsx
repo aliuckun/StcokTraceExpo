@@ -1,27 +1,34 @@
 import React, { useState } from 'react';
 import {
     View, Text, FlatList, StyleSheet, TouchableOpacity,
-    Modal, TextInput, Animated, Platform, UIManager
+    Modal, TextInput, Animated, Alert
 } from 'react-native';
-import { Plus, NotebookPen, Trash2, Edit3 } from 'lucide-react-native';
+import { Plus, NotebookPen, Trash2, Edit3, Search } from 'lucide-react-native';
 
 // Hook ve Bileşenler
 import { useStocks } from '../hooks/useStocks';
 import { StockCard } from '../components/StockCard';
-import { AddStockModal } from '../components/AddStockModal'; // Dosya yolunu kontrol et
+import { AddStockModal } from '../components/AddStockModal';
 
 export default function HomeScreen() {
-    // Tüm karmaşık mantık burada toplandı
-    const { stocks, deletingId, animRefs, actions } = useStocks();
+    // Hook'tan filtreleme ve arama fonksiyonlarını alıyoruz
+    const {
+        stocks,
+        searchQuery,
+        setSearchQuery,
+        deletingId,
+        animRefs,
+        actions
+    } = useStocks();
 
-    // Sadece bu sayfaya özel UI durumları
+    // UI States
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [selectedStockForEdit, setSelectedStockForEdit] = useState<any>(null);
     const [newPrice, setNewPrice] = useState('');
 
     return (
         <View style={styles.container}>
-            {/* Üst Başlık Bölümü */}
+            {/* HEADER */}
             <View style={styles.header}>
                 <View>
                     <Text style={styles.welcomeText}>Portföy Durumu</Text>
@@ -30,7 +37,19 @@ export default function HomeScreen() {
                 <NotebookPen color="#3b82f6" size={28} />
             </View>
 
-            {/* Hisse Listesi */}
+            {/* ARAMA ÇUBUĞU */}
+            <View style={styles.searchContainer}>
+                <Search color="#94a3b8" size={20} style={styles.searchIcon} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Hisse ara (örn: CIMSA)..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor="#94a3b8"
+                />
+            </View>
+
+            {/* HİSSE LİSTESİ */}
             <FlatList
                 data={stocks}
                 keyExtractor={(item) => item.id}
@@ -74,26 +93,29 @@ export default function HomeScreen() {
                         </Animated.View>
                     );
                 }}
-                ListEmptyComponent={<Text style={styles.emptyText}>Henüz hisse eklenmemiş.</Text>}
+                ListEmptyComponent={
+                    <Text style={styles.emptyText}>
+                        {searchQuery ? "Aradığınız kriterde hisse bulunamadı." : "Henüz hisse eklenmemiş."}
+                    </Text>
+                }
             />
 
-            {/* Yeni Hisse Ekleme Butonu (FAB) */}
+            {/* FAB: Yeni Hisse Ekle */}
             <TouchableOpacity style={styles.fab} onPress={() => setIsAddModalVisible(true)}>
                 <Plus color="white" size={30} />
             </TouchableOpacity>
 
-            {/* MODAL 1: Yeni Hisse Ekleme */}
+            {/* MODAL: Yeni Hisse Ekleme */}
             <AddStockModal
                 isVisible={isAddModalVisible}
                 onClose={() => setIsAddModalVisible(false)}
-                // Async hatasını gidermek için başına async ekledik
                 onSave={async (stock) => {
                     await actions.addStock(stock.symbol, stock.name);
                     setIsAddModalVisible(false);
                 }}
             />
 
-            {/* MODAL 2: Manuel Fiyat Güncelleme */}
+            {/* MODAL: Fiyat Güncelleme */}
             <Modal visible={!!selectedStockForEdit} animationType="fade" transparent>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
@@ -136,6 +158,19 @@ const styles = StyleSheet.create({
     header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, paddingTop: 60 },
     welcomeText: { color: '#64748b', fontSize: 14 },
     title: { fontSize: 24, fontWeight: 'bold', color: '#1e293b' },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        marginHorizontal: 20,
+        marginBottom: 10,
+        paddingHorizontal: 15,
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
+    searchIcon: { marginRight: 10 },
+    searchInput: { flex: 1, height: 45, fontSize: 16, color: '#1e293b' },
     listContent: { padding: 20 },
     cardWrapper: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-start' },
     deleteAction: {
