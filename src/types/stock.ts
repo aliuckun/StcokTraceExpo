@@ -1,40 +1,44 @@
-/**
- * Pozisyonun durumunu belirtir.
- */
 export type PositionStatus = 'OPEN' | 'CLOSED';
-
-/**
- * İşlemin yönünü belirtir.
- * LONG: Alış (Fiyat artışı beklenir)
- * SHORT: Açığa Satış (Fiyat düşüşü beklenir)
- */
 export type TradeDirection = 'LONG' | 'SHORT';
 
 /**
- * İşlem Detayları (Defter Kaydı)
+ * TradePlan: İleride yapılması planlanan işlemler.
+ * "Strateji Defteri" mantığıyla çalışır.
  */
-export interface TradeAction {
+export interface TradePlan {
     id: string;
-    stockSymbol: string;      // Hangi hisseye ait olduğu
-    direction: TradeDirection; // LONG veya SHORT
-    buyPrice: number;         // Giriş (Açılış) fiyatı
-    stopLoss?: number;        // Zarar durdurma fiyatı
-    takeProfit?: number;      // Hedef kâr fiyatı (Sell hedefi)
-    sellPrice?: number;       // Çıkış (Kapanış) fiyatı
-    position: PositionStatus;  // Açık mı, Kapalı mı?
-    entryDate: Date | string;  // Pozisyona giriş tarihi
-    exitDate?: Date | string;  // Pozisyondan çıkış tarihi
-    profitValue?: number;     // Kar-Zarar tutarı (Manuel veya otomatik hesaplanabilir)
-    note?: string;            // Neden bu işlemi yaptım? (Defter mantığı için ek bilgi)
+    stockSymbol: string;
+    direction: TradeDirection;
+    buyPrice: number;          // Hedef giriş fiyatı
+    stopLoss?: number;
+    takeProfit?: number;
+    note: string;              // Plan aşamasında zorunlu: Neden bu işleme giriyorum?
 }
 
 /**
- * Ana Hisse Elemanı
+ * TradeAction: Gerçekleşen işlem detayları.
+ * Mevcut yapını bozmamak için değişken isimleri korundu.
  */
+export interface TradeAction {
+    id: string;
+    stockSymbol: string;
+    direction: TradeDirection;
+    buyPrice: number;          // Giriş fiyatı
+    quantity: number;          // Miktar (Yeni eklendi)
+    stopLoss?: number;
+    takeProfit?: number;
+    sellPrice?: number;
+    position: PositionStatus;
+    entryDate: Date | string;
+    exitDate?: Date | string;
+    note?: string;             // İşlem sırasında opsiyonel
+}
+
 export interface Stock {
     id: string;
-    name: string;             // Hisse ismi
-    symbol: string;           // Kısaltması (THYAO, AAPL vb.)
-    currentPrice?: number;    // Güncel değeri (Opsiyonel - Manuel takip için)
-    history: TradeAction[];   // Bu hisseye ait geçmiş tüm pozisyonlar
+    name: string;
+    symbol: string;
+    currentPrice?: number;
+    history: TradeAction[];    // Gerçekleşenler
+    plans: TradePlan[];       // Hedefler (Yeni eklendi)
 }

@@ -52,6 +52,7 @@ export const useStocks = () => {
             symbol: symbol.toUpperCase().trim(),
             name: name.trim(),
             history: [],
+            plans: [], // Hatanın çözümü: Yeni eklediğimiz zorunlu alan
         };
         await StockService.upsert(newStock);
         LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);

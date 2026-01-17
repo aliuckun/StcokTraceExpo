@@ -24,12 +24,19 @@ export const StockService = {
     getById: async (id: string): Promise<Stock | undefined> => {
         const stocks = await getAllStocks();
         const stock = stocks.find(s => s.id === id);
+
         if (stock) {
-            // Tarihe göre sıralama mantığını buraya taşıdık
+            // Plans dizisini başlat (yoksa)
+            if (!stock.plans) {
+                stock.plans = [];
+            }
+
+            // Tarihe göre sıralama
             stock.history.sort((a, b) =>
                 new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
             );
         }
+
         return stock;
     }
 };

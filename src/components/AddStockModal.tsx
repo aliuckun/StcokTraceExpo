@@ -17,7 +17,6 @@ interface AddStockModalProps {
     onSave: (stock: Stock) => void;
 }
 
-// Stock objesi açarak yeni bir kart tanımlar
 export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose, onSave }) => {
     const [symbol, setSymbol] = useState('');
     const [name, setName] = useState('');
@@ -25,11 +24,13 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose
     const handleSave = () => {
         if (!symbol || !name) return;
 
+        // TypeScript uyarısını gidermek için 'plans' dizisini ekledik
         const newStock: Stock = {
             id: Date.now().toString(),
             symbol: symbol.toUpperCase().trim(),
             name: name.trim(),
-            history: [],
+            history: [],   // Gerçekleşen işlemler dizisi
+            plans: [],     // Yeni eklediğimiz: İşlem planları dizisi
         };
 
         onSave(newStock);
@@ -79,6 +80,7 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose
     );
 };
 
+// ... Styles kısmı aynı kalabilir ...
 const styles = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
     modalContent: {
