@@ -6,7 +6,7 @@ export const StorageHelper = {
             const value = await AsyncStorage.getItem(key);
             return value ? JSON.parse(value) : null;
         } catch (error) {
-            console.error(`${key} okunurken hata oluştu:`, error);
+            console.error(`${key} okunurken hata:`, error);
             return null;
         }
     },
@@ -15,7 +15,7 @@ export const StorageHelper = {
         try {
             await AsyncStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
-            console.error(`${key} kaydedilirken hata oluştu:`, error);
+            console.error(`${key} kaydedilirken hata:`, error);
         }
     },
 
@@ -23,7 +23,7 @@ export const StorageHelper = {
         try {
             await AsyncStorage.removeItem(key);
         } catch (error) {
-            console.error(`${key} silinirken hata oluştu:`, error);
+            console.error(`${key} silinirken hata:`, error);
         }
     }
 };

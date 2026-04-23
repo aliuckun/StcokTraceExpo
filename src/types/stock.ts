@@ -1,37 +1,34 @@
 export type PositionStatus = 'OPEN' | 'CLOSED';
 export type TradeDirection = 'LONG' | 'SHORT';
 
-/**
- * TradePlan: İleride yapılması planlanan işlemler.
- * "Strateji Defteri" mantığıyla çalışır.
- */
+export interface SupportLevel {
+    id: string;
+    price: number;
+}
+
 export interface TradePlan {
     id: string;
     stockSymbol: string;
     direction: TradeDirection;
-    buyPrice: number;          // Hedef giriş fiyatı
+    buyPrice: number;
     stopLoss?: number;
     takeProfit?: number;
-    note: string;              // Plan aşamasında zorunlu: Neden bu işleme giriyorum?
+    note: string;
 }
 
-/**
- * TradeAction: Gerçekleşen işlem detayları.
- * Mevcut yapını bozmamak için değişken isimleri korundu.
- */
 export interface TradeAction {
     id: string;
     stockSymbol: string;
     direction: TradeDirection;
-    buyPrice: number;          // Giriş fiyatı
-    quantity: number;          // Miktar (Yeni eklendi)
+    buyPrice: number;
+    quantity: number;
     stopLoss?: number;
     takeProfit?: number;
     sellPrice?: number;
     position: PositionStatus;
-    entryDate: Date | string;
-    exitDate?: Date | string;
-    note?: string;             // İşlem sırasında opsiyonel
+    entryDate: string;
+    exitDate?: string;
+    note?: string;
 }
 
 export interface Stock {
@@ -39,6 +36,9 @@ export interface Stock {
     name: string;
     symbol: string;
     currentPrice?: number;
-    history: TradeAction[];    // Gerçekleşenler
-    plans: TradePlan[];       // Hedefler (Yeni eklendi)
+    changePercent?: number;
+    lastUpdated?: string;
+    history: TradeAction[];
+    plans: TradePlan[];
+    supports: SupportLevel[];
 }

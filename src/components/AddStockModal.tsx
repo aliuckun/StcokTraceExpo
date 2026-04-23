@@ -1,39 +1,22 @@
 import React, { useState } from 'react';
 import {
-    Modal,
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    KeyboardAvoidingView,
-    Platform
+    Modal, View, Text, TextInput,
+    TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform
 } from 'react-native';
-import { Stock } from '../types/stock';
 
-interface AddStockModalProps {
+interface Props {
     isVisible: boolean;
     onClose: () => void;
-    onSave: (stock: Stock) => void;
+    onSave: (symbol: string, name: string) => void;
 }
 
-export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose, onSave }) => {
+export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) => {
     const [symbol, setSymbol] = useState('');
     const [name, setName] = useState('');
 
     const handleSave = () => {
-        if (!symbol || !name) return;
-
-        // TypeScript uyarısını gidermek için 'plans' dizisini ekledik
-        const newStock: Stock = {
-            id: Date.now().toString(),
-            symbol: symbol.toUpperCase().trim(),
-            name: name.trim(),
-            history: [],   // Gerçekleşen işlemler dizisi
-            plans: [],     // Yeni eklediğimiz: İşlem planları dizisi
-        };
-
-        onSave(newStock);
+        if (!symbol.trim() || !name.trim()) return;
+        onSave(symbol, name);
         setSymbol('');
         setName('');
         onClose();
@@ -41,37 +24,39 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose
 
     return (
         <Modal visible={isVisible} animationType="slide" transparent>
-            <View style={styles.overlay}>
+            <View style={s.overlay}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.modalContent}
+                    style={s.sheet}
                 >
-                    <Text style={styles.title}>Yeni Hisse Ekle</Text>
+                    <View style={s.handle} />
+                    <Text style={s.title}>Yeni Hisse Ekle</Text>
 
-                    <Text style={styles.label}>Sembol</Text>
+                    <Text style={s.label}>Sembol</Text>
                     <TextInput
-                        style={styles.input}
+                        style={s.input}
                         placeholder="Örn: THYAO"
+                        placeholderTextColor="#94a3b8"
                         value={symbol}
                         onChangeText={setSymbol}
                         autoCapitalize="characters"
                     />
 
-                    <Text style={styles.label}>Hisse Adı</Text>
+                    <Text style={s.label}>Hisse Adı</Text>
                     <TextInput
-                        style={styles.input}
+                        style={s.input}
                         placeholder="Örn: Türk Hava Yolları"
+                        placeholderTextColor="#94a3b8"
                         value={name}
                         onChangeText={setName}
                     />
 
-                    <View style={styles.buttonContainer}>
-                        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onClose}>
-                            <Text style={styles.cancelButtonText}>İptal</Text>
+                    <View style={s.btnRow}>
+                        <TouchableOpacity style={s.btnCancel} onPress={onClose}>
+                            <Text style={s.btnCancelText}>İptal</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleSave}>
-                            <Text style={styles.saveButtonText}>Ekle</Text>
+                        <TouchableOpacity style={s.btnSave} onPress={handleSave}>
+                            <Text style={s.btnSaveText}>Ekle</Text>
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
@@ -80,31 +65,75 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isVisible, onClose
     );
 };
 
-// ... Styles kısmı aynı kalabilir ...
-const styles = StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContent: {
+const s = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'flex-end',
+    },
+    sheet: {
         backgroundColor: '#fff',
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
-        padding: 25,
-        paddingBottom: 40
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 24,
+        paddingBottom: 40,
     },
-    title: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, color: '#1a1a1a' },
-    label: { fontSize: 14, color: '#666', marginBottom: 5, fontWeight: '500' },
-    input: {
-        backgroundColor: '#f5f6fa',
-        borderRadius: 12,
-        padding: 15,
+    handle: {
+        width: 36,
+        height: 4,
+        backgroundColor: '#e2e8f0',
+        borderRadius: 2,
+        alignSelf: 'center',
         marginBottom: 20,
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: '#eee'
     },
-    buttonContainer: { flexDirection: 'row', gap: 12 },
-    button: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center' },
-    cancelButton: { backgroundColor: '#f1f2f6' },
-    saveButton: { backgroundColor: '#3b82f6' },
-    cancelButtonText: { color: '#57606f', fontWeight: 'bold' },
-    saveButtonText: { color: '#fff', fontWeight: 'bold' }
+    title: {
+        fontSize: 18,
+        fontWeight: '500',
+        color: '#1e293b',
+        marginBottom: 20,
+    },
+    label: {
+        fontSize: 12,
+        color: '#64748b',
+        marginBottom: 6,
+    },
+    input: {
+        backgroundColor: '#f8fafc',
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: '#e2e8f0',
+        padding: 13,
+        fontSize: 15,
+        color: '#1e293b',
+        marginBottom: 16,
+    },
+    btnRow: {
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 4,
+    },
+    btnCancel: {
+        flex: 1,
+        padding: 14,
+        borderRadius: 10,
+        backgroundColor: '#f1f5f9',
+        alignItems: 'center',
+    },
+    btnSave: {
+        flex: 1,
+        padding: 14,
+        borderRadius: 10,
+        backgroundColor: '#378add',
+        alignItems: 'center',
+    },
+    btnCancelText: {
+        color: '#64748b',
+        fontWeight: '500',
+        fontSize: 15,
+    },
+    btnSaveText: {
+        color: '#fff',
+        fontWeight: '500',
+        fontSize: 15,
+    },
 });

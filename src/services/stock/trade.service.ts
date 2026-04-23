@@ -1,37 +1,28 @@
-import { Stock, TradeAction, TradePlan } from '../../types/stock';
-
-// stock.base.ts'den import et
+import { TradeAction, TradePlan, SupportLevel } from '../../types/stock';
 import { getAllStocks, saveStocks } from './stock.base';
+import { generateId } from '../../utils/generateId';
 
-export class TradeService {
-    // Kar/Zarar Hesaplama
-    static calculateProfit(trade: TradeAction): number {
+export const TradeService = {
+    calculateProfit: (trade: TradeAction): number => {
         if (!trade.sellPrice || trade.position !== 'CLOSED') return 0;
-
         const diff = trade.direction === 'LONG'
             ? trade.sellPrice - trade.buyPrice
             : trade.buyPrice - trade.sellPrice;
-
         return diff * trade.quantity;
-    }
+    },
 
-    // GERÇEK İŞLEM İŞLEMLERİ
-    static async addTrade(stockId: string, trade: TradeAction): Promise<void> {
-        const stocks = await getAllStocks();
-        const stockIndex = stocks.findIndex(s => s.id === stockId);
-
-        if (stockIndex === -1) return;
-
-        stocks[stockIndex].history.push(trade);
-        await saveStocks(stocks);
-    }
-
-    static async closePosition(stockId: string, tradeId: string, sellPrice: number): Promise<void> {
+    addTrade: async (stockId: string, trade: TradeAction): Promise<void> => {
         const stocks = await getAllStocks();
         const stock = stocks.find(s => s.id === stockId);
-
         if (!stock) return;
+        stock.history.push(trade);
+        await saveStocks(stocks);
+    },
 
+    closePosition: async (stockId: string, tradeId: string, sellPrice: number): Promise<void> => {
+        const stocks = await getAllStocks();
+        const stock = stocks.find(s => s.id === stockId);
+        if (!stock) return;
         const trade = stock.history.find(t => t.id === tradeId);
         if (trade && trade.position === 'OPEN') {
             trade.position = 'CLOSED';
@@ -39,83 +30,45 @@ export class TradeService {
             trade.exitDate = new Date().toISOString();
             await saveStocks(stocks);
         }
-    }
+    },
 
-    static async removeTrade(stockId: string, tradeId: string): Promise<void> {
+    removeTrade: async (stockId: string, tradeId: string): Promise<void> => {
         const stocks = await getAllStocks();
         const stock = stocks.find(s => s.id === stockId);
-
         if (!stock) return;
-
         stock.history = stock.history.filter(t => t.id !== tradeId);
         await saveStocks(stocks);
-    }
+    },
 
-    // PLAN İŞLEMLERİ
-    static async addPlan(stockId: string, plan: TradePlan): Promise<void> {
+    addPlan: async (stockId: string, plan: TradePlan): Promise<void> => {
         const stocks = await getAllStocks();
         const stock = stocks.find(s => s.id === stockId);
-
-        if (!stock) {
-            console.error('Stock not found:', stockId);
-            return;
-        }
-
-        // Plans dizisini başlat (yoksa)
-        if (!stock.plans) {
-            stock.plans = [];
-        }
-
+        if (!stock) return;
         stock.plans.push(plan);
-        console.log('Plan added:', plan);
-        console.log('Total plans for stock:', stock.plans.length);
-
         await saveStocks(stocks);
-    }
+    },
 
-    static async removePlan(stockId: string, planId: string): Promise<void> {
+    removePlan: async (stockId: string, planId: string): Promise<void> => {
         const stocks = await getAllStocks();
         const stock = stocks.find(s => s.id === stockId);
-
-        if (!stock || !stock.plans) return;
-
+        if (!stock) return;
         stock.plans = stock.plans.filter(p => p.id !== planId);
         await saveStocks(stocks);
-    }
+    },
 
-    static async convertPlanToTrade(
-        stockId: string,
-        planId: string,
-        quantity: number,
-        actualBuyPrice?: number
-    ): Promise<void> {
+    addSupport: async (stockId: string, support: SupportLevel): Promise<void> => {
         const stocks = await getAllStocks();
         const stock = stocks.find(s => s.id === stockId);
-
-        if (!stock || !stock.plans) return;
-
-        const plan = stock.plans.find(p => p.id === planId);
-        if (!plan) return;
-
-        // Planı gerçek işleme çevir
-        const newTrade: TradeAction = {
-            id: Date.now().toString(),
-            stockSymbol: plan.stockSymbol,
-            direction: plan.direction,
-            buyPrice: actualBuyPrice || plan.buyPrice,
-            quantity: quantity,
-            stopLoss: plan.stopLoss,
-            takeProfit: plan.takeProfit,
-            note: `Plan'dan dönüştürüldü: ${plan.note}`,
-            position: 'OPEN',
-            entryDate: new Date().toISOString()
-        };
-
-        stock.history.push(newTrade);
-
-        // Planı sil
-        stock.plans = stock.plans.filter(p => p.id !== planId);
-
+        if (!stock) return;
+        stock.supports.push(support);
         await saveStocks(stocks);
-    }
-}
+    },
+
+    removeSupport: async (stockId: string, supportId: string): Promise<void> => {
+        const stocks = await getAllStocks();
+        const stock = stocks.find(s => s.id === stockId);
+        if (!stock) return;
+        stock.supports = stock.supports.filter(s => s.id !== supportId);
+        await saveStocks(stocks);
+    },
+};
