@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { View, Image, StyleSheet, StatusBar } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import HomeScreen from './src/screens/HomeScreen';
 import StockDetailScreen from './src/screens/StockDetailScreen';
@@ -17,13 +18,29 @@ SplashScreen.preventAutoHideAsync();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+    const [ready, setReady] = useState(false);
+
     useEffect(() => {
-        // Uygulama hazır olunca splash'i kapat
-        const hide = async () => {
+        const prepare = async () => {
             await SplashScreen.hideAsync();
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            setReady(true);
         };
-        hide();
+        prepare();
     }, []);
+
+    if (!ready) {
+        return (
+            <View style={styles.splash}>
+                <StatusBar hidden />
+                <Image
+                    source={require('./assets/bcg.png')}
+                    style={styles.splashImage}
+                    resizeMode="cover"
+                />
+            </View>
+        );
+    }
 
     return (
         <NavigationContainer>
@@ -38,3 +55,15 @@ export default function App() {
         </NavigationContainer>
     );
 }
+
+const styles = StyleSheet.create({
+    splash: {
+        flex: 1,
+        backgroundColor: '#000',
+    },
+    splashImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+});

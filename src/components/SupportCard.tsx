@@ -19,13 +19,20 @@ export const SupportCard: React.FC<Props> = ({ support, currentPrice, onDelete }
     const progressColor = isClose ? '#7acc9e' : isMid ? '#f5d080' : '#f0c0c0';
     const tag = isClose ? 'Yakın' : isMid ? 'Orta' : 'Uzak';
 
+    const isSupport = support.price < currentPrice;
+    const levelLabel = isSupport ? 'Destek' : 'Direnç';
+    const levelColor = isSupport ? '#4ade80' : '#e74c3c';
+
     return (
         <View style={[s.card, isClose && s.cardClose]}>
             <View style={s.top}>
-                <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={s.price}>
                         {support.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
                     </Text>
+                    <View style={[s.levelBadge, { backgroundColor: isSupport ? 'rgba(74,222,128,0.15)' : 'rgba(231,76,60,0.15)', borderColor: isSupport ? 'rgba(74,222,128,0.4)' : 'rgba(231,76,60,0.4)' }]}>
+                        <Text style={[s.levelBadgeText, { color: levelColor }]}>{levelLabel}</Text>
+                    </View>
                 </View>
                 <View style={s.rightTop}>
                     <Text style={[s.pct, { color: pctColor }]}>
@@ -61,16 +68,16 @@ export const SupportCard: React.FC<Props> = ({ support, currentPrice, onDelete }
 
 const s = StyleSheet.create({
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         borderRadius: 10,
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 12,
         marginBottom: 8,
     },
     cardClose: {
         borderWidth: 1.5,
-        borderColor: '#1a7a4a',
+        borderColor: '#4ade80',
     },
     top: {
         flexDirection: 'row',
@@ -81,7 +88,7 @@ const s = StyleSheet.create({
     price: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#1e293b',
+        color: '#ffffff',
     },
     rightTop: {
         alignItems: 'flex-end',
@@ -102,7 +109,7 @@ const s = StyleSheet.create({
     },
     progressWrap: {
         height: 4,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: 2,
         overflow: 'hidden',
         marginBottom: 8,
@@ -118,19 +125,30 @@ const s = StyleSheet.create({
     },
     dist: {
         fontSize: 11,
-        color: '#64748b',
+        color: 'rgba(255,255,255,0.6)',
     },
     deleteBtn: {
-        backgroundColor: '#fdf0f0',
+        backgroundColor: 'rgba(231,76,60,0.15)',
         paddingHorizontal: 14,
         paddingVertical: 5,
         borderRadius: 8,
         borderWidth: 0.5,
-        borderColor: '#fca5a5',
+        borderColor: 'rgba(231,76,60,0.4)',
     },
     deleteText: {
         fontSize: 12,
-        color: '#b03030',
+        color: '#e74c3c',
         fontWeight: '500',
     },
+    levelBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+        borderWidth: 0.5,
+    },
+    levelBadgeText: {
+        fontSize: 10,
+        fontWeight: '500',
+    },
+
 });

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Modal, View, Text, TextInput,
-    TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform
+    TouchableOpacity, StyleSheet, KeyboardAvoidingView,
+    Platform, Keyboard, TouchableWithoutFeedback,
+    PanResponder, Animated,
 } from 'react-native';
 
 interface Props {
@@ -14,53 +16,111 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
     const [symbol, setSymbol] = useState('');
     const [name, setName] = useState('');
 
+    const translateY = useRef(new Animated.Value(0)).current;
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, { dy }) => dy > 5,
+            onPanResponderMove: (_, { dy }) => {
+                if (dy > 0) translateY.setValue(dy); // sadece aşağı hareket
+            },
+            onPanResponderRelease: (_, { dy, vy }) => {
+                if (dy > 100 || vy > 0.5) {
+                    // Yeterince aşağı çekildi → kapat
+                    Animated.timing(translateY, {
+                        toValue: 600,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        translateY.setValue(0);
+                        onClose();
+                    });
+                } else {
+                    // Yeterli değil → geri yay
+                    Animated.spring(translateY, {
+                        toValue: 0,
+                        useNativeDriver: true,
+                        bounciness: 6,
+                    }).start();
+                }
+            },
+        })
+    ).current;
+
     const handleSave = () => {
         if (!symbol.trim() || !name.trim()) return;
-        onSave(symbol, name);
+        onSave(symbol.trim(), name.trim());
         setSymbol('');
         setName('');
         onClose();
     };
 
+    const handleClose = () => {
+        translateY.setValue(0);
+        onClose();
+    };
+
     return (
-        <Modal visible={isVisible} animationType="slide" transparent>
-            <View style={s.overlay}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={s.sheet}
-                >
-                    <View style={s.handle} />
-                    <Text style={s.title}>Yeni Hisse Ekle</Text>
+        <Modal
+            visible={isVisible}
+            animationType="slide"
+            transparent
+            statusBarTranslucent
+            onRequestClose={handleClose}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={s.overlay}>
+                    <KeyboardAvoidingView
+                        behavior="padding"
+                        keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}
+                    >
+                        <TouchableWithoutFeedback>
+                            <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
 
-                    <Text style={s.label}>Sembol</Text>
-                    <TextInput
-                        style={s.input}
-                        placeholder="Örn: THYAO"
-                        placeholderTextColor="#94a3b8"
-                        value={symbol}
-                        onChangeText={setSymbol}
-                        autoCapitalize="characters"
-                    />
+                                {/* Sürüklenebilir handle */}
+                                <View {...panResponder.panHandlers} style={s.handleArea}>
+                                    <View style={s.handle} />
+                                </View>
 
-                    <Text style={s.label}>Hisse Adı</Text>
-                    <TextInput
-                        style={s.input}
-                        placeholder="Örn: Türk Hava Yolları"
-                        placeholderTextColor="#94a3b8"
-                        value={name}
-                        onChangeText={setName}
-                    />
+                                <Text style={s.title}>Yeni Hisse Ekle</Text>
 
-                    <View style={s.btnRow}>
-                        <TouchableOpacity style={s.btnCancel} onPress={onClose}>
-                            <Text style={s.btnCancelText}>İptal</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={s.btnSave} onPress={handleSave}>
-                            <Text style={s.btnSaveText}>Ekle</Text>
-                        </TouchableOpacity>
-                    </View>
-                </KeyboardAvoidingView>
-            </View>
+                                <Text style={s.label}>Sembol</Text>
+                                <TextInput
+                                    style={s.input}
+                                    placeholder="Örn: THYAO"
+                                    placeholderTextColor="#4b5563"
+                                    value={symbol}
+                                    onChangeText={setSymbol}
+                                    autoCapitalize="characters"
+                                    returnKeyType="next"
+                                />
+
+                                <Text style={s.label}>Hisse Adı</Text>
+                                <TextInput
+                                    style={s.input}
+                                    placeholder="Örn: Türk Hava Yolları"
+                                    placeholderTextColor="#4b5563"
+                                    value={name}
+                                    onChangeText={setName}
+                                    returnKeyType="done"
+                                    onSubmitEditing={handleSave}
+                                />
+
+                                <View style={s.btnRow}>
+                                    <TouchableOpacity style={s.btnCancel} onPress={handleClose} activeOpacity={0.7}>
+                                        <Text style={s.btnCancelText}>İptal</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={s.btnSave} onPress={handleSave} activeOpacity={0.7}>
+                                        <Text style={s.btnSaveText}>Ekle</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                            </Animated.View>
+                        </TouchableWithoutFeedback>
+                    </KeyboardAvoidingView>
+                </View>
+            </TouchableWithoutFeedback>
         </Modal>
     );
 };
@@ -68,43 +128,48 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
 const s = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.65)',
         justifyContent: 'flex-end',
     },
     sheet: {
-        backgroundColor: '#fff',
+        backgroundColor: '#0f0f0f',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 24,
-        paddingBottom: 40,
+        paddingBottom: 48,
+    },
+    handleArea: {
+        alignItems: 'center',
+        paddingVertical: 8,
+        marginTop: -8,
+        marginBottom: 12,
     },
     handle: {
         width: 36,
         height: 4,
-        backgroundColor: '#e2e8f0',
+        backgroundColor: '#2d2d2d',
         borderRadius: 2,
-        alignSelf: 'center',
-        marginBottom: 20,
     },
     title: {
         fontSize: 18,
-        fontWeight: '500',
-        color: '#1e293b',
+        fontWeight: '600',
+        color: '#ffffff',
         marginBottom: 20,
     },
     label: {
         fontSize: 12,
-        color: '#64748b',
+        color: '#9ca3af',
         marginBottom: 6,
+        letterSpacing: 0.4,
     },
     input: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#1c1c1c',
         borderRadius: 10,
-        borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        borderColor: '#2d2d2d',
         padding: 13,
         fontSize: 15,
-        color: '#1e293b',
+        color: '#ffffff',
         marginBottom: 16,
     },
     btnRow: {
@@ -116,24 +181,28 @@ const s = StyleSheet.create({
         flex: 1,
         padding: 14,
         borderRadius: 10,
-        backgroundColor: '#f1f5f9',
+        backgroundColor: '#1c1c1c',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#2d2d2d',
     },
     btnSave: {
         flex: 1,
         padding: 14,
         borderRadius: 10,
-        backgroundColor: '#378add',
+        backgroundColor: '#1c1c1c',   // ← artık koyu
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#2d2d2d',
     },
     btnCancelText: {
-        color: '#64748b',
+        color: '#9ca3af',
         fontWeight: '500',
         fontSize: 15,
     },
     btnSaveText: {
-        color: '#fff',
-        fontWeight: '500',
+        color: '#ffffff',              // ← beyaz yazı
+        fontWeight: '600',
         fontSize: 15,
     },
 });

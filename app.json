@@ -8,20 +8,26 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/bcg.png",
+      "image": "./assets/splash_dark.png",
       "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0a281e"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.summer053.stocktakipexpo"
+      "package": "com.summer053.stocktakipexpo",
+      "splash": {
+        "image": "./assets/black_splash.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#0a281e"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

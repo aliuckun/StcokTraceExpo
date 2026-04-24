@@ -73,7 +73,7 @@ export default function PortfolioSummaryScreen() {
             {/* HEADER */}
             <View style={s.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-                    <Text style={s.backText}>← Geri</Text>
+                    <Text style={s.backText}>‹ </Text>
                 </TouchableOpacity>
                 <Text style={s.headerSub}>Genel Bakış</Text>
                 <Text style={s.headerTitle}>Portföy Özeti</Text>
@@ -84,19 +84,19 @@ export default function PortfolioSummaryScreen() {
                 {/* TOPLAM KART */}
                 <View style={s.totalCard}>
                     <Text style={s.totalLabel}>TOPLAM KAR / ZARAR</Text>
-                    <Text style={[s.totalValue, { color: totalPnl >= 0 ? '#7acc9e' : '#f0c0c0' }]}>
+                    <Text style={[s.totalValue, { color: totalPnl >= 0 ? '#1a7a4a' : '#b03030' }]}>
                         {fmtSigned(totalPnl)}
                     </Text>
                     <View style={s.totalRow}>
                         <View style={s.totalItem}>
                             <Text style={s.totalItemLabel}>Gerçekleşen</Text>
-                            <Text style={[s.totalItemValue, { color: realizedPnl >= 0 ? '#7acc9e' : '#f0c0c0' }]}>
+                            <Text style={[s.totalItemValue, { color: realizedPnl >= 0 ? '#1a7a4a' : '#b03030' }]}>
                                 {fmtSigned(realizedPnl)}
                             </Text>
                         </View>
                         <View style={s.totalItem}>
                             <Text style={s.totalItemLabel}>Açık Pozisyon</Text>
-                            <Text style={[s.totalItemValue, { color: openPnl >= 0 ? '#7acc9e' : '#f0c0c0' }]}>
+                            <Text style={[s.totalItemValue, { color: openPnl >= 0 ? '#1a7a4a' : '#f0c0c0' }]}>
                                 {fmtSigned(openPnl)}
                             </Text>
                         </View>
@@ -209,38 +209,51 @@ export default function PortfolioSummaryScreen() {
         </View>
     );
 }
-
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
+    container: { flex: 1, backgroundColor: '#232323' },
     header: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         paddingTop: 52,
         paddingBottom: 12,
         paddingHorizontal: 16,
         borderBottomWidth: 0.5,
-        borderBottomColor: '#e2e8f0',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backBtn: { marginBottom: 8 },
-    backText: { fontSize: 13, color: '#378add' },
-    headerSub: { fontSize: 11, color: '#64748b' },
-    headerTitle: { fontSize: 20, fontWeight: '500', color: '#1e293b' },
+    backBtn: {
+        marginBottom: 8,
+        alignSelf: 'flex-start',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        width: 30,
+        height: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    backText: { fontSize: 18, color: '#ffffff', lineHeight: 15, includeFontPadding: false },
+    headerSub: { fontSize: 11, color: 'rgba(255,255,255,0.6)' },
+    headerTitle: { fontSize: 20, fontWeight: '500', color: '#ffffff' },
     content: { padding: 14, paddingBottom: 40 },
     totalCard: {
-        backgroundColor: '#378add',
+        backgroundColor: '#1e1f21',
         borderRadius: 14,
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 16,
         marginBottom: 16,
     },
-    totalLabel: { fontSize: 10, color: 'rgba(255,255,255,0.7)', marginBottom: 4, letterSpacing: 0.4 },
+    totalLabel: { fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 4, letterSpacing: 0.4 },
     totalValue: { fontSize: 28, fontWeight: '500', marginBottom: 14 },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between' },
     totalItem: { gap: 2 },
-    totalItemLabel: { fontSize: 9, color: 'rgba(255,255,255,0.6)' },
+    totalItemLabel: { fontSize: 9, color: 'rgba(255,255,255,0.5)' },
     totalItemValue: { fontSize: 13, fontWeight: '500' },
-    totalItemValueWhite: { fontSize: 13, fontWeight: '500', color: '#fff' },
+    totalItemValueWhite: { fontSize: 13, fontWeight: '500', color: '#ffffff' },
     sectionLabel: {
         fontSize: 10,
-        color: '#94a3b8',
+        color: 'rgba(255,255,255,0.6)',
         letterSpacing: 0.5,
         marginBottom: 8,
     },
@@ -253,32 +266,32 @@ const s = StyleSheet.create({
     statCard: {
         flex: 1,
         minWidth: '45%',
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         borderRadius: 10,
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 12,
         gap: 4,
     },
-    statLbl: { fontSize: 10, color: '#94a3b8', letterSpacing: 0.3 },
-    statVal: { fontSize: 15, fontWeight: '500', color: '#1e293b' },
-    statValMuted: { fontSize: 13, color: '#94a3b8' },
+    statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: 0.3 },
+    statVal: { fontSize: 15, fontWeight: '500', color: '#ffffff' },
+    statValMuted: { fontSize: 13, color: 'rgba(255,255,255,0.4)' },
     perfCard: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         borderRadius: 10,
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 12,
         marginBottom: 8,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    perfSym: { fontSize: 13, fontWeight: '500', color: '#1e293b' },
-    perfName: { fontSize: 10, color: '#94a3b8', marginTop: 2 },
+    perfSym: { fontSize: 13, fontWeight: '500', color: '#ffffff' },
+    perfName: { fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
     perfRight: { alignItems: 'flex-end', gap: 4 },
     perfPnl: { fontSize: 14, fontWeight: '500' },
     perfBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
     perfBadgeText: { fontSize: 10 },
-    emptyText: { fontSize: 13, color: '#94a3b8', textAlign: 'center', marginTop: 40 },
+    emptyText: { fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginTop: 40 },
 });

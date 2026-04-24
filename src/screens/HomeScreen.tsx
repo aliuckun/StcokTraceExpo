@@ -55,7 +55,9 @@ const SwipeableStockRow: React.FC<{
                             stock.supports.some(sup =>
                                 Math.abs((stock.currentPrice! - sup.price) / stock.currentPrice!) * 100 <= 2
                             ) && (
-                                <View style={sw.warnDot} />
+                                <View style={sw.warnTriangle}>
+                                    <Text style={sw.warnTriangleText}>!</Text>
+                                </View>
                             )
                         }
                     </View>
@@ -157,7 +159,7 @@ export default function HomeScreen() {
                         style={s.btnSummary}
                         onPress={() => navigation.navigate('PortfolioSummary')}
                     >
-                        <Text style={s.summaryIcon}>◈</Text>
+                        <Text style={s.summaryIcon}>▤</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -198,7 +200,7 @@ export default function HomeScreen() {
                     <TextInput
                         style={s.searchInput}
                         placeholder="Hisse ara..."
-                        placeholderTextColor="#94a3b8"
+                        placeholderTextColor="#ffffff"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
@@ -208,7 +210,7 @@ export default function HomeScreen() {
             {/* TABLO BAŞLIĞI */}
             <View style={s.tableHeader}>
                 <TouchableOpacity style={{ flex: 1.5 }} onPress={() => handleSort('symbol')}>
-                    <Text style={s.colLabel}>KOD{sortIcon('symbol')}</Text>
+                    <Text style={s.colLabel2}>KOD{sortIcon('symbol')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={{ flex: 1.5, alignItems: 'flex-end' }} onPress={() => handleSort('price')}>
                     <Text style={s.colLabel}>FİYAT{sortIcon('price')}</Text>
@@ -253,26 +255,177 @@ export default function HomeScreen() {
         </View>
     );
 }
+const s = StyleSheet.create({
+    symbol: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#ffffff',
+    },
+
+    price: {
+        flex: 1.5,
+        fontSize: 13,
+        color: '#ffffff',
+        textAlign: 'right',
+    },
+    changeDash: {
+        flex: 1,
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.6)',
+        textAlign: 'right',
+    },
+
+    container: { flex: 1, backgroundColor: '#232323' },
+    header: {
+        backgroundColor: '#1e1f21',
+        paddingTop: 52,
+        paddingBottom: 12,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottomWidth: 0.5,
+        borderBottomColor: 'rgba(255,255,255,0.12)',
+    },
+    headerSub: { fontSize: 11, color: 'rgba(255,255,255,0.6)' },
+    headerTitle: { fontSize: 20, fontWeight: '500', color: '#ffffff' },
+    headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    btnRefresh: {
+        width: 32, height: 32, borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    refreshIcon: { fontSize: 18, color: '#ffffff', lineHeight: 28 },
+    btnAdd: {
+        width: 32, height: 32, borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    btnAddText: { color: '#ffffff', fontSize: 20, lineHeight: 22 },
+    btnSummary: {
+        width: 32, height: 32, borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    summaryIcon: { fontSize: 16, color: '#ffffff' },
+    bistCard: {
+        backgroundColor: '#1e1f21',
+        marginHorizontal: 14,
+        marginTop: 12,
+        marginBottom: 4,
+        borderRadius: 12,
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.12)',
+        padding: 14,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    bistLabel: { fontSize: 18, fontWeight: '500', color: 'rgba(255,255,255,1)', letterSpacing: 0.5, bottom: 5 },
+    bistTime: { fontSize: 13, color: 'rgba(255,255,255,1)', marginTop: 2 },
+    bistValue: { fontSize: 22, fontWeight: '500', color: '#ffffff', textAlign: 'right', marginBottom: 4 },
+    bistRight: { alignItems: 'flex-end', gap: 4 },
+    bistBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 10 },
+    bistBadgeText: { fontSize: 13, fontWeight: '600' },
+    searchRow: { padding: 10 },
+    searchBox: {
+        backgroundColor: '#1e1f21',
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.12)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        gap: 6,
+    },
+    searchIcon: { fontSize: 22, color: 'rgba(255,255,255,0.4)', bottom: 2 },
+    searchInput: { flex: 1, height: 38, fontSize: 14, color: '#ffffff' },
+    tableHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: '#232323',
+        borderBottomWidth: 0.5,
+        borderBottomColor: 'rgba(255,255,255,0.08)',
+    },
+    colLabel: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,1.2)',
+        letterSpacing: 0.5,
+        fontWeight: '600',
+    },
+    colLabel2: {
+        fontSize: 13,
+        left: 17,
+        color: 'rgba(255,255,255,1.2)',
+        letterSpacing: 0.5,
+        fontWeight: '600',
+    },
+    emptyWrap: { alignItems: 'center', marginTop: 60 },
+    emptyText: { fontSize: 14, color: 'rgba(255,255,255,0.4)' },
+});
 
 const sw = StyleSheet.create({
+    changePct: {
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        borderRadius: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        overflow: 'hidden',
+        alignSelf: 'flex-end',
+        minWidth: 64,
+    },
+    changeDash: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.8)',
+        textAlign: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        borderRadius: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        overflow: 'hidden',
+        alignSelf: 'flex-end',
+        width: 64,
+    },
+
+    symbol: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#ffffff',
+    },
+    symbolTime: {
+        fontSize: 10,
+        color: 'rgba(255,255,255,1)',
+    },
+    price: {
+        flex: 1.5,
+        fontSize: 14,
+        color: '#ffffff',
+        textAlign: 'right',
+        paddingRight: 19,
+    },
     rowWrap: {
         position: 'relative',
         overflow: 'hidden',
     },
     row: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         zIndex: 1,
-    },
-    symbolRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-    },
-    warnDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#f59e0b',
     },
     rowInner: {
         flexDirection: 'row',
@@ -280,50 +433,50 @@ const sw = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 16,
         borderBottomWidth: 0.5,
-        borderBottomColor: '#f1f5f9',
+        borderBottomColor: 'rgba(255,255,255,0.08)',
         gap: 8,
     },
     indicator: {
         width: 3,
         height: 28,
         borderRadius: 2,
-        backgroundColor: '#e2e8f0',
+        backgroundColor: 'rgba(255,255,255,0.15)',
         marginRight: 6,
     },
     indicatorActive: {
-        backgroundColor: '#378add',
+        backgroundColor: '#4ade80',
     },
     symbolCol: {
         flex: 1.5,
         gap: 2,
     },
-    symbol: {
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#1e293b',
+    symbolRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
     },
-    symbolTime: {
-        fontSize: 10,
-        color: '#94a3b8',
+    warnTriangle: {
+        width: 16,
+        height: 16,
+        backgroundColor: 'transparent',
+        borderLeftWidth: 8,
+        borderRightWidth: 8,
+        borderBottomWidth: 14,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderBottomColor: '#f59e0b',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
     },
-    price: {
-        flex: 1.5,
-        fontSize: 13,
-        color: '#1e293b',
-        textAlign: 'right',
+    warnTriangleText: {
+        fontSize: 14,
+        color: '#1e1f21',
+        fontWeight: '700',
+        position: 'absolute',
+        bottom: -17,
     },
-    changePct: {
-        flex: 1,
-        fontSize: 12,
-        fontWeight: '500',
-        textAlign: 'right',
-    },
-    changeDash: {
-        flex: 1,
-        fontSize: 12,
-        color: '#94a3b8',
-        textAlign: 'right',
-    },
+
+
     deleteAction: {
         position: 'absolute',
         right: 0,
@@ -339,96 +492,4 @@ const sw = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500',
     },
-});
-
-const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    header: {
-        backgroundColor: '#fff',
-        paddingTop: 52,
-        paddingBottom: 12,
-        paddingHorizontal: 16,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#e2e8f0',
-    },
-    btnSummary: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#f0f4f8',
-        borderWidth: 0.5,
-        borderColor: '#e2e8f0',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    summaryIcon: {
-        fontSize: 16,
-        color: '#378add',
-    },
-    headerSub: { fontSize: 11, color: '#64748b' },
-    headerTitle: { fontSize: 20, fontWeight: '500', color: '#1e293b' },
-    headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-    btnRefresh: {
-        width: 32, height: 32, borderRadius: 16,
-        backgroundColor: '#f0f4f8', borderWidth: 0.5,
-        borderColor: '#e2e8f0', alignItems: 'center', justifyContent: 'center',
-    },
-    refreshIcon: { fontSize: 18, color: '#378add' },
-    btnAdd: {
-        width: 32, height: 32, borderRadius: 16,
-        backgroundColor: '#378add', alignItems: 'center', justifyContent: 'center',
-    },
-    btnAddText: { color: '#fff', fontSize: 20, lineHeight: 22 },
-    bistCard: {
-        backgroundColor: '#fff',
-        marginHorizontal: 14,
-        marginTop: 12,
-        marginBottom: 4,
-        borderRadius: 12,
-        borderWidth: 0.5,
-        borderColor: '#e2e8f0',
-        padding: 14,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    bistLabel: { fontSize: 11, fontWeight: '500', color: '#64748b', letterSpacing: 0.5 },
-    bistTime: { fontSize: 10, color: '#94a3b8', marginTop: 2 },
-    bistValue: { fontSize: 22, fontWeight: '500', color: '#1e293b', textAlign: 'right', marginBottom: 4 },
-    bistRight: { alignItems: 'flex-end', gap: 4 },
-    bistBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-    bistBadgeText: { fontSize: 13, fontWeight: '500' },
-    searchRow: { padding: 10 },
-    searchBox: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        borderWidth: 0.5,
-        borderColor: '#e2e8f0',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        gap: 6,
-    },
-    searchIcon: { fontSize: 16, color: '#94a3b8' },
-    searchInput: { flex: 1, height: 38, fontSize: 14, color: '#1e293b' },
-    tableHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: '#f8f9fa',
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#e2e8f0',
-    },
-    colLabel: {
-        fontSize: 10,
-        color: '#94a3b8',
-        letterSpacing: 0.5,
-        fontWeight: '500',
-    },
-    emptyWrap: { alignItems: 'center', marginTop: 60 },
-    emptyText: { fontSize: 14, color: '#94a3b8' },
 });

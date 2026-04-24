@@ -17,6 +17,8 @@ type NavProp = NativeStackNavigationProp<RootStackParamList, 'StockDetail'>;
 type Tab = 'positions' | 'supports' | 'news';
 type FilterDir = 'ALL' | 'LONG' | 'SHORT';
 type FilterStatus = 'ALL' | 'OPEN' | 'CLOSED';
+type FilterLevel = 'ALL' | 'SUPPORT' | 'RESISTANCE';
+type FilterDistance = 'ALL' | 'CLOSE' | 'MID' | 'FAR';
 
 export default function StockDetailScreen() {
     const route = useRoute<RouteProps>();
@@ -29,6 +31,8 @@ export default function StockDetailScreen() {
     const [newsLoading, setNewsLoading] = useState(false);
     const [filterDir, setFilterDir] = useState<FilterDir>('ALL');
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
+    const [filterLevel, setFilterLevel] = useState<FilterLevel>('ALL');
+    const [filterDistance, setFilterDistance] = useState<FilterDistance>('ALL');
 
     const [addTradeVisible, setAddTradeVisible] = useState(false);
     const [addSupportVisible, setAddSupportVisible] = useState(false);
@@ -129,7 +133,7 @@ export default function StockDetailScreen() {
             {/* HEADER */}
             <View style={s.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-                    <Text style={s.backText}>← Geri</Text>
+                    <Text style={s.backText}>‹ </Text>
                 </TouchableOpacity>
 
                 <View style={s.headerMain}>
@@ -206,14 +210,14 @@ export default function StockDetailScreen() {
                                     <View style={s.statsRow}>
                                         <View style={s.statCard}>
                                             <Text style={s.statLabel}>Gerçekleşen K/Z</Text>
-                                            <Text style={[s.statValue, { color: realizedPnl >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                            <Text style={[s.statValue, { color: realizedPnl >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                 {fmtSigned(realizedPnl)}
                                             </Text>
                                         </View>
                                         <View style={s.statCard}>
                                             <Text style={s.statLabel}>Anlık K/Z</Text>
                                             {openPnl !== null ? (
-                                                <Text style={[s.statValue, { color: openPnl >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                                <Text style={[s.statValue, { color: openPnl >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                     {fmtSigned(openPnl)}
                                                 </Text>
                                             ) : (
@@ -229,7 +233,7 @@ export default function StockDetailScreen() {
                                         <View style={s.statCard}>
                                             <Text style={s.statLabel}>Kazanma Oranı</Text>
                                             {winRate !== null ? (
-                                                <Text style={[s.statValue, { color: winRate >= 50 ? '#1a7a4a' : '#b03030' }]}>
+                                                <Text style={[s.statValue, { color: winRate >= 50 ? '#4ade80' : '#e23c3c' }]}>
                                                     %{winRate.toFixed(0)}
                                                     <Text style={s.statSub}> ({winningTrades}/{closed.length})</Text>
                                                 </Text>
@@ -242,7 +246,7 @@ export default function StockDetailScreen() {
                                         <View style={s.statCard}>
                                             <Text style={s.statLabel}>Ort. K/Z (Trade)</Text>
                                             {avgPnl !== null ? (
-                                                <Text style={[s.statValue, { color: avgPnl >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                                <Text style={[s.statValue, { color: avgPnl >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                     {fmtSigned(avgPnl)}
                                                 </Text>
                                             ) : (
@@ -252,11 +256,11 @@ export default function StockDetailScreen() {
                                         <View style={s.statCard}>
                                             <Text style={s.statLabel}>Toplam K/Z</Text>
                                             {openPnl !== null ? (
-                                                <Text style={[s.statValue, { color: (realizedPnl + openPnl) >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                                <Text style={[s.statValue, { color: (realizedPnl + openPnl) >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                     {fmtSigned(realizedPnl + openPnl)}
                                                 </Text>
                                             ) : (
-                                                <Text style={[s.statValue, { color: realizedPnl >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                                <Text style={[s.statValue, { color: realizedPnl >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                     {fmtSigned(realizedPnl)}
                                                 </Text>
                                             )}
@@ -301,8 +305,8 @@ export default function StockDetailScreen() {
                             <>
                                 <View style={s.sectionRow}>
                                     <Text style={s.sectionLabel}>AÇIK POZİSYONLAR</Text>
-                                    <TouchableOpacity onPress={() => setAddTradeVisible(true)}>
-                                        <Text style={s.addBtn}>+ Ekle</Text>
+                                    <TouchableOpacity onPress={() => setAddTradeVisible(true)} style={s.addBtnOutline}>
+                                        <Text style={s.addBtnOutlineText}>+ Ekle</Text>
                                     </TouchableOpacity>
                                 </View>
 
@@ -338,7 +342,7 @@ export default function StockDetailScreen() {
                                                         <Text style={s.badgeOpenText}>Açık</Text>
                                                     </View>
                                                     {stock.currentPrice && (
-                                                        <Text style={[s.tradePnl, { color: profit >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                                        <Text style={[s.tradePnl, { color: profit >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                             {fmtSigned(profit)}
                                                         </Text>
                                                     )}
@@ -370,7 +374,12 @@ export default function StockDetailScreen() {
                         {/* KAPALI POZİSYONLAR */}
                         {filterStatus !== 'OPEN' && (
                             <>
-                                <Text style={[s.sectionLabel, { marginTop: filterStatus === 'CLOSED' ? 0 : 16 }]}>
+                                <Text style={[s.sectionLabel, {
+                                    marginTop: filterStatus === 'CLOSED' ? 0 : 16,
+                                    paddingTop: filterStatus === 'CLOSED' ? 0 : 16,
+                                    borderTopWidth: filterStatus === 'CLOSED' ? 0 : 0.5,
+                                    borderTopColor: 'rgba(255,255,255,0.15)',
+                                }]}>
                                     KAPALI POZİSYONLAR
                                 </Text>
                                 {closedTrades.length === 0 && (
@@ -399,7 +408,7 @@ export default function StockDetailScreen() {
                                                     <View style={s.badgeClosed}>
                                                         <Text style={s.badgeClosedText}>Kapalı</Text>
                                                     </View>
-                                                    <Text style={[s.tradePnl, { color: profit >= 0 ? '#1a7a4a' : '#b03030' }]}>
+                                                    <Text style={[s.tradePnl, { color: profit >= 0 ? '#4ade80' : '#e23c3c' }]}>
                                                         {fmtSigned(profit)}
                                                     </Text>
                                                 </View>
@@ -424,25 +433,89 @@ export default function StockDetailScreen() {
                 {activeTab === 'supports' && (
                     <View>
                         <View style={s.sectionRow}>
-                            <Text style={s.sectionLabel}>DESTEK SEVİYELERİ</Text>
-                            <TouchableOpacity onPress={() => setAddSupportVisible(true)}>
-                                <Text style={s.addBtn}>+ Ekle</Text>
+                            <Text style={s.sectionLabel}>DESTEK / DİRENÇ SEVİYELERİ</Text>
+                            <TouchableOpacity onPress={() => setAddSupportVisible(true)} style={s.addBtnOutline}>
+                                <Text style={s.addBtnOutlineText}>+ Ekle</Text>
                             </TouchableOpacity>
                         </View>
+
+                        {/* FİLTRELER */}
+                        <View style={s.filterWrap}>
+                            <View style={s.filterRow}>
+                                {([
+                                    { key: 'ALL', label: 'Tümü' },
+                                    { key: 'SUPPORT', label: 'Destek' },
+                                    { key: 'RESISTANCE', label: 'Direnç' },
+                                ] as { key: FilterLevel; label: string }[]).map(f => (
+                                    <TouchableOpacity
+                                        key={f.key}
+                                        style={[s.filterBtn, filterLevel === f.key && s.filterBtnActive]}
+                                        onPress={() => setFilterLevel(f.key)}
+                                    >
+                                        <Text style={[s.filterBtnText, filterLevel === f.key && s.filterBtnTextActive]}>
+                                            {f.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                            <View style={s.filterRow}>
+                                {([
+                                    { key: 'ALL', label: 'Tümü' },
+                                    { key: 'CLOSE', label: 'Yakın (%0-2)' },
+                                    { key: 'MID', label: 'Orta (%2-8)' },
+                                    { key: 'FAR', label: 'Uzak (%8+)' },
+                                ] as { key: FilterDistance; label: string }[]).map(f => (
+                                    <TouchableOpacity
+                                        key={f.key}
+                                        style={[s.filterBtn, filterDistance === f.key && s.filterBtnActive]}
+                                        onPress={() => setFilterDistance(f.key)}
+                                    >
+                                        <Text style={[s.filterBtnText, filterDistance === f.key && s.filterBtnTextActive]}>
+                                            {f.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
                         {stock.supports.length === 0 && (
-                            <Text style={s.emptyText}>Henüz destek eklenmemiş.</Text>
+                            <Text style={s.emptyText}>Henüz seviye eklenmemiş.</Text>
                         )}
+
                         {stock.currentPrice
-                            ? [...stock.supports]
-                                .sort((a, b) => b.price - a.price)
-                                .map(support => (
+                            ? (() => {
+                                const filtered = [...stock.supports]
+                                    .filter(sup => {
+                                        const isSupport = sup.price < stock.currentPrice!;
+                                        if (filterLevel === 'SUPPORT' && !isSupport) return false;
+                                        if (filterLevel === 'RESISTANCE' && isSupport) return false;
+
+                                        const pct = Math.abs((stock.currentPrice! - sup.price) / stock.currentPrice!) * 100;
+                                        if (filterDistance === 'CLOSE' && pct > 2) return false;
+                                        if (filterDistance === 'MID' && (pct <= 2 || pct > 8)) return false;
+                                        if (filterDistance === 'FAR' && pct <= 8) return false;
+
+                                        return true;
+                                    })
+                                    .sort((a, b) => {
+                                        const pctA = Math.abs((stock.currentPrice! - a.price) / stock.currentPrice!) * 100;
+                                        const pctB = Math.abs((stock.currentPrice! - b.price) / stock.currentPrice!) * 100;
+                                        return pctA - pctB;
+                                    })
+
+                                if (filtered.length === 0) {
+                                    return <Text style={s.emptyText}>Filtreye uygun seviye bulunamadı.</Text>;
+                                }
+
+                                return filtered.map(support => (
                                     <SupportCard
                                         key={support.id}
                                         support={support}
                                         currentPrice={stock.currentPrice!}
                                         onDelete={() => actions.removeSupport(support.id)}
                                     />
-                                ))
+                                ));
+                            })()
                             : <Text style={s.emptyText}>Fiyat bilgisi yok. Önce fiyat güncelleyin.</Text>
                         }
                     </View>
@@ -451,7 +524,7 @@ export default function StockDetailScreen() {
                 {/* HABERLER */}
                 {activeTab === 'news' && (
                     <View>
-                        <Text style={s.sectionLabel}>KAP HABERLERİ</Text>
+                        <Text style={[s.sectionLabel, { fontSize: 14, marginBottom: 12 }]}>KAP HABERLERİ</Text>
                         {newsLoading && (
                             <ActivityIndicator color="#378add" style={{ marginTop: 20 }} />
                         )}
@@ -616,34 +689,111 @@ export default function StockDetailScreen() {
 }
 
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
-    loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    addBtnOutline: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+    },
+    addBtnOutlineText: {
+        fontSize: 12,
+        color: '#ffffff',
+    },
+    tradeDet: { fontSize: 12, color: 'rgba(255,255,255,0.9)', marginTop: 2 },
+    tradeSlTp: { fontSize: 12, color: 'rgba(255,255,255,0.9)', marginTop: 2 },
+    tradeNote: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontStyle: 'italic' },
+    stockName: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+    updateTime: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
+    newsDate: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
+    newsTitle: { fontSize: 14, color: '#ffffff', lineHeight: 18 },
+    statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 },
+    statSub: { fontSize: 12, fontWeight: '400', color: 'rgba(255,255,255,0.85)' },
+    sectionLabel: { fontSize: 11, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.5 },
+    emptyText: { fontSize: 14, color: 'rgba(255,255,255,0.55)', marginTop: 4, marginBottom: 8 },
+    filterBtnText: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
+    badgeClosedText: { fontSize: 11, color: 'rgba(255,255,255,0.75)' },
+    segText: { fontSize: 13, color: 'rgba(255,255,255,0.8)' },
+    dirBtnText: { fontSize: 15, fontWeight: '500', color: 'rgba(255,255,255,0.8)' },
+    inputLabel: { fontSize: 13, color: 'rgba(255,255,255,0.9)', marginBottom: 6 },
+    modalBtnCancelText: { color: 'rgba(255,255,255,0.85)', fontWeight: '500', fontSize: 16 },
+    dist: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
+
+    filterBtnActive: { backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.6)' },
+    filterBtnTextActive: { fontSize: 12, color: '#ffffff', fontWeight: '500' },
+
+    addBtn: { fontSize: 12, color: '#ffffff' },
+
+    badgeOpen: { backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.3)' },
+    badgeOpenText: { fontSize: 10, color: '#ffffff' },
+
+    tradeActionBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.25)' },
+    tradeActionText: { fontSize: 12, color: '#ffffff' },
+
+    modalTitle: { fontSize: 18, fontWeight: '500', color: '#ffffff', marginBottom: 20 },
+    dirBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)' },
+    dirBtnActive: { backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.6)' },
+
+    dirBtnTextActive: { color: '#ffffff' },
+
+    input: { backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.2)', padding: 13, fontSize: 15, color: '#ffffff', marginBottom: 14 },
+    modalBtnCancel: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center' },
+    modalBtnSave: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.4)', alignItems: 'center' },
+    modalBtnSaveText: { color: '#ffffff', fontWeight: '500', fontSize: 15 },
+
+
+
+
+    container: { flex: 1, backgroundColor: '#232323' },
+    loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#161718' },
+
     header: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         paddingTop: 52,
         paddingHorizontal: 16,
         paddingBottom: 0,
         borderBottomWidth: 0.5,
-        borderBottomColor: '#e2e8f0',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backBtn: { marginBottom: 8 },
-    backText: { fontSize: 13, color: '#378add' },
+    backBtn: {
+        marginBottom: 8,
+        alignSelf: 'flex-start',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        width: 30,
+        height: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    backText: { fontSize: 18, color: '#ffffff', lineHeight: 15, includeFontPadding: false },
     headerMain: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         marginBottom: 12,
     },
-    symbol: { fontSize: 20, fontWeight: '500', color: '#1e293b' },
-    stockName: { fontSize: 11, color: '#64748b', marginTop: 2 },
+    symbol: { fontSize: 20, fontWeight: '500', color: '#ffffff' },
+
     priceWrap: { alignItems: 'flex-end', gap: 2 },
-    price: { fontSize: 22, fontWeight: '500', color: '#1e293b' },
-    updateTime: { fontSize: 10, color: '#94a3b8' },
-    refreshBtn: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-    refreshText: { fontSize: 16, color: '#378add' },
+    price: { fontSize: 22, fontWeight: '500', color: '#ffffff' },
+
+    refreshBtn: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    refreshText: { fontSize: 18, color: '#ffffff', lineHeight: 17, includeFontPadding: false, marginTop: -2 },
+
     segmentWrap: {
         flexDirection: 'row',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: 'rgba(255,255,255,0.08)',
         borderRadius: 9,
         padding: 2,
         marginBottom: 12,
@@ -651,15 +801,16 @@ const s = StyleSheet.create({
     },
     seg: { flex: 1, paddingVertical: 6, borderRadius: 7, alignItems: 'center' },
     segActive: {
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(255,255,255,0.15)',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.3,
         shadowRadius: 2,
         elevation: 1,
     },
-    segText: { fontSize: 12, color: '#64748b' },
-    segTextActive: { fontSize: 12, fontWeight: '500', color: '#185fa5' },
+
+    segTextActive: { fontSize: 12, fontWeight: '500', color: '#ffffff' },
+
     content: { flex: 1 },
     sectionRow: {
         flexDirection: 'row',
@@ -667,42 +818,41 @@ const s = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 8,
     },
-    sectionLabel: { fontSize: 10, color: '#94a3b8', letterSpacing: 0.5 },
-    addBtn: { fontSize: 12, color: '#378add' },
-    emptyText: { fontSize: 13, color: '#94a3b8', marginTop: 4, marginBottom: 8 },
+
+
+
     statsWrap: { marginBottom: 16, gap: 8 },
     statsRow: { flexDirection: 'row', gap: 8 },
     statCard: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         borderRadius: 10,
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 12,
         gap: 4,
     },
-    statLabel: { fontSize: 10, color: '#94a3b8', letterSpacing: 0.3 },
-    statValue: { fontSize: 14, fontWeight: '500', color: '#1e293b' },
-    statValueMuted: { fontSize: 13, color: '#94a3b8' },
-    statSub: { fontSize: 11, fontWeight: '400' },
+
+    statValue: { fontSize: 14, fontWeight: '500', color: '#ffffff' },
+    statValueMuted: { fontSize: 13, color: 'rgba(255,255,255,0.3)' },
+
+
     filterWrap: { gap: 6, marginBottom: 12 },
     filterRow: { flexDirection: 'row', gap: 6 },
     filterBtn: {
         paddingHorizontal: 12,
         paddingVertical: 5,
         borderRadius: 20,
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(255,255,255,0.08)',
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.15)',
     },
-    filterBtnActive: { backgroundColor: '#378add', borderColor: '#378add' },
-    filterBtnText: { fontSize: 12, color: '#64748b' },
-    filterBtnTextActive: { fontSize: 12, color: '#fff', fontWeight: '500' },
+
     tradeCard: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         borderRadius: 10,
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 12,
         marginBottom: 8,
     },
@@ -711,55 +861,45 @@ const s = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
     },
-    tradeDir: { fontSize: 13, fontWeight: '500', color: '#1e293b' },
-    tradeDet: { fontSize: 11, color: '#64748b', marginTop: 2 },
-    tradeSlTp: { fontSize: 11, color: '#64748b', marginTop: 2 },
-    tradeNote: { fontSize: 11, color: '#94a3b8', marginTop: 2, fontStyle: 'italic' },
+    tradeDir: { fontSize: 13, fontWeight: '500', color: '#ffffff' },
+
     tradeRight: { alignItems: 'flex-end', gap: 4 },
     tradePnl: { fontSize: 14, fontWeight: '500' },
-    badgeOpen: { backgroundColor: '#e6f1fb', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-    badgeOpenText: { fontSize: 10, color: '#185fa5' },
-    badgeClosed: { backgroundColor: '#f0f0f0', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-    badgeClosedText: { fontSize: 10, color: '#64748b' },
+
+    badgeClosed: { backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+
     tradeActions: {
         flexDirection: 'row',
         gap: 8,
         marginTop: 10,
         borderTopWidth: 0.5,
-        borderTopColor: '#f1f5f9',
+        borderTopColor: 'rgba(255,255,255,0.08)',
         paddingTop: 8,
     },
-    tradeActionBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, backgroundColor: '#e6f1fb' },
-    tradeActionText: { fontSize: 12, color: '#185fa5' },
-    tradeActionBtnDanger: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, backgroundColor: '#fdf0f0' },
-    tradeActionTextDanger: { fontSize: 12, color: '#b03030' },
+
+    tradeActionBtnDanger: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, backgroundColor: 'rgba(231,76,60,0.15)' },
+    tradeActionTextDanger: { fontSize: 12, color: '#e74c3c' },
+
     newsCard: {
-        backgroundColor: '#fff',
+        backgroundColor: '#1e1f21',
         borderRadius: 10,
         borderWidth: 0.5,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255,255,255,0.12)',
         padding: 12,
         marginBottom: 8,
         gap: 5,
     },
-    newsDate: { fontSize: 10, color: '#94a3b8' },
-    newsTitle: { fontSize: 13, color: '#1e293b', lineHeight: 18 },
-    newsLink: { fontSize: 12, color: '#378add', marginTop: 2 },
+
+
+    newsLink: { fontSize: 12, color: '#a0c4ff', marginTop: 2 },
+
     slTpRow: { flexDirection: 'row', gap: 10 },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-    modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
-    modalHandle: { width: 36, height: 4, backgroundColor: '#e2e8f0', borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
-    modalTitle: { fontSize: 18, fontWeight: '500', color: '#1e293b', marginBottom: 20 },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+    modalSheet: { backgroundColor: '#1e1f21', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
+    modalHandle: { width: 36, height: 4, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
+
     dirRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-    dirBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 0.5, borderColor: '#e2e8f0', alignItems: 'center', backgroundColor: '#f8fafc' },
-    dirBtnActive: { backgroundColor: '#378add', borderColor: '#378add' },
-    dirBtnText: { fontSize: 14, fontWeight: '500', color: '#64748b' },
-    dirBtnTextActive: { color: '#fff' },
-    inputLabel: { fontSize: 12, color: '#64748b', marginBottom: 6 },
-    input: { backgroundColor: '#f8fafc', borderRadius: 10, borderWidth: 0.5, borderColor: '#e2e8f0', padding: 13, fontSize: 15, color: '#1e293b', marginBottom: 14 },
+
     modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
-    modalBtnCancel: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: '#f1f5f9', alignItems: 'center' },
-    modalBtnSave: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: '#378add', alignItems: 'center' },
-    modalBtnCancelText: { color: '#64748b', fontWeight: '500', fontSize: 15 },
-    modalBtnSaveText: { color: '#fff', fontWeight: '500', fontSize: 15 },
+
 });
