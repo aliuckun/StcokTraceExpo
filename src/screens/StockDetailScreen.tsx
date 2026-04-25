@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView,
-    StatusBar, ActivityIndicator, Modal, TextInput, Alert, Linking
+    StatusBar, ActivityIndicator, TextInput, Alert, Linking
 } from 'react-native';
+import { SwipeableModal } from '../components/SwipeableModal'; // ← ekle
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
@@ -549,141 +550,126 @@ export default function StockDetailScreen() {
             </ScrollView>
 
             {/* İŞLEM EKLE MODAL */}
-            <Modal visible={addTradeVisible} animationType="slide" transparent>
-                <View style={s.modalOverlay}>
-                    <View style={s.modalSheet}>
-                        <View style={s.modalHandle} />
-                        <Text style={s.modalTitle}>İşlem Ekle</Text>
-                        <View style={s.dirRow}>
-                            {(['LONG', 'SHORT'] as const).map(dir => (
-                                <TouchableOpacity
-                                    key={dir}
-                                    style={[s.dirBtn, tradeDirection === dir && s.dirBtnActive]}
-                                    onPress={() => setTradeDirection(dir)}
-                                >
-                                    <Text style={[s.dirBtnText, tradeDirection === dir && s.dirBtnTextActive]}>
-                                        {dir}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                        <Text style={s.inputLabel}>Giriş Fiyatı</Text>
+            <SwipeableModal visible={addTradeVisible} onClose={() => setAddTradeVisible(false)}>
+                <Text style={s.modalTitle}>İşlem Ekle</Text>
+                <View style={s.dirRow}>
+                    {(['LONG', 'SHORT'] as const).map(dir => (
+                        <TouchableOpacity
+                            key={dir}
+                            style={[s.dirBtn, tradeDirection === dir && s.dirBtnActive]}
+                            onPress={() => setTradeDirection(dir)}
+                        >
+                            <Text style={[s.dirBtnText, tradeDirection === dir && s.dirBtnTextActive]}>
+                                {dir}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+                <Text style={s.inputLabel}>Giriş Fiyatı</Text>
+                <TextInput
+                    style={s.input}
+                    placeholder="0.00"
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="numeric"
+                    value={tradeBuyPrice}
+                    onChangeText={setTradeBuyPrice}
+                />
+                <Text style={s.inputLabel}>Lot Miktarı</Text>
+                <TextInput
+                    style={s.input}
+                    placeholder="0"
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="numeric"
+                    value={tradeQuantity}
+                    onChangeText={setTradeQuantity}
+                />
+                <View style={s.slTpRow}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={s.inputLabel}>Stop Loss</Text>
                         <TextInput
                             style={s.input}
                             placeholder="0.00"
                             placeholderTextColor="#94a3b8"
                             keyboardType="numeric"
-                            value={tradeBuyPrice}
-                            onChangeText={setTradeBuyPrice}
+                            value={tradeStopLoss}
+                            onChangeText={setTradeStopLoss}
                         />
-                        <Text style={s.inputLabel}>Lot Miktarı</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={s.inputLabel}>Take Profit</Text>
                         <TextInput
                             style={s.input}
-                            placeholder="0"
+                            placeholder="0.00"
                             placeholderTextColor="#94a3b8"
                             keyboardType="numeric"
-                            value={tradeQuantity}
-                            onChangeText={setTradeQuantity}
+                            value={tradeTakeProfit}
+                            onChangeText={setTradeTakeProfit}
                         />
-                        <View style={s.slTpRow}>
-                            <View style={{ flex: 1 }}>
-                                <Text style={s.inputLabel}>Stop Loss</Text>
-                                <TextInput
-                                    style={s.input}
-                                    placeholder="0.00"
-                                    placeholderTextColor="#94a3b8"
-                                    keyboardType="numeric"
-                                    value={tradeStopLoss}
-                                    onChangeText={setTradeStopLoss}
-                                />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={s.inputLabel}>Take Profit</Text>
-                                <TextInput
-                                    style={s.input}
-                                    placeholder="0.00"
-                                    placeholderTextColor="#94a3b8"
-                                    keyboardType="numeric"
-                                    value={tradeTakeProfit}
-                                    onChangeText={setTradeTakeProfit}
-                                />
-                            </View>
-                        </View>
-                        <Text style={s.inputLabel}>Not (opsiyonel)</Text>
-                        <TextInput
-                            style={s.input}
-                            placeholder="İşlem notu..."
-                            placeholderTextColor="#94a3b8"
-                            value={tradeNote}
-                            onChangeText={setTradeNote}
-                        />
-                        <View style={s.modalBtnRow}>
-                            <TouchableOpacity style={s.modalBtnCancel} onPress={() => setAddTradeVisible(false)}>
-                                <Text style={s.modalBtnCancelText}>İptal</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={s.modalBtnSave} onPress={handleAddTrade}>
-                                <Text style={s.modalBtnSaveText}>Ekle</Text>
-                            </TouchableOpacity>
-                        </View>
                     </View>
                 </View>
-            </Modal>
+                <Text style={s.inputLabel}>Not (opsiyonel)</Text>
+                <TextInput
+                    style={s.input}
+                    placeholder="İşlem notu..."
+                    placeholderTextColor="#94a3b8"
+                    value={tradeNote}
+                    onChangeText={setTradeNote}
+                />
+                <View style={s.modalBtnRow}>
+                    <TouchableOpacity style={s.modalBtnCancel} onPress={() => setAddTradeVisible(false)}>
+                        <Text style={s.modalBtnCancelText}>İptal</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.modalBtnSave} onPress={handleAddTrade}>
+                        <Text style={s.modalBtnSaveText}>Ekle</Text>
+                    </TouchableOpacity>
+                </View>
+            </SwipeableModal>
 
             {/* POZİSYON KAPAT MODAL */}
-            <Modal visible={closeTradeVisible} animationType="slide" transparent>
-                <View style={s.modalOverlay}>
-                    <View style={s.modalSheet}>
-                        <View style={s.modalHandle} />
-                        <Text style={s.modalTitle}>Pozisyon Kapat</Text>
-                        <Text style={s.inputLabel}>Çıkış Fiyatı</Text>
-                        <TextInput
-                            style={s.input}
-                            placeholder="0.00"
-                            placeholderTextColor="#94a3b8"
-                            keyboardType="numeric"
-                            value={sellPrice}
-                            onChangeText={setSellPrice}
-                            autoFocus
-                        />
-                        <View style={s.modalBtnRow}>
-                            <TouchableOpacity style={s.modalBtnCancel} onPress={() => setCloseTradeVisible(false)}>
-                                <Text style={s.modalBtnCancelText}>İptal</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={s.modalBtnSave} onPress={handleClosePosition}>
-                                <Text style={s.modalBtnSaveText}>Kapat</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+            <SwipeableModal visible={closeTradeVisible} onClose={() => { setCloseTradeVisible(false); setSelectedTrade(null); setSellPrice(''); }}>
+                <Text style={s.modalTitle}>Pozisyon Kapat</Text>
+                <Text style={s.inputLabel}>Çıkış Fiyatı</Text>
+                <TextInput
+                    style={s.input}
+                    placeholder="0.00"
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="numeric"
+                    value={sellPrice}
+                    onChangeText={setSellPrice}
+                    autoFocus
+                />
+                <View style={s.modalBtnRow}>
+                    <TouchableOpacity style={s.modalBtnCancel} onPress={() => { setCloseTradeVisible(false); setSelectedTrade(null); setSellPrice(''); }}>
+                        <Text style={s.modalBtnCancelText}>İptal</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.modalBtnSave} onPress={handleClosePosition}>
+                        <Text style={s.modalBtnSaveText}>Kapat</Text>
+                    </TouchableOpacity>
                 </View>
-            </Modal>
+            </SwipeableModal>
 
             {/* DESTEK EKLE MODAL */}
-            <Modal visible={addSupportVisible} animationType="slide" transparent>
-                <View style={s.modalOverlay}>
-                    <View style={s.modalSheet}>
-                        <View style={s.modalHandle} />
-                        <Text style={s.modalTitle}>Destek Ekle</Text>
-                        <Text style={s.inputLabel}>Destek Fiyatı</Text>
-                        <TextInput
-                            style={s.input}
-                            placeholder="0.00"
-                            placeholderTextColor="#94a3b8"
-                            keyboardType="numeric"
-                            value={supportPrice}
-                            onChangeText={setSupportPrice}
-                            autoFocus
-                        />
-                        <View style={s.modalBtnRow}>
-                            <TouchableOpacity style={s.modalBtnCancel} onPress={() => setAddSupportVisible(false)}>
-                                <Text style={s.modalBtnCancelText}>İptal</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={s.modalBtnSave} onPress={handleAddSupport}>
-                                <Text style={s.modalBtnSaveText}>Ekle</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+            <SwipeableModal visible={addSupportVisible} onClose={() => setAddSupportVisible(false)}>
+                <Text style={s.modalTitle}>Destek Ekle</Text>
+                <Text style={s.inputLabel}>Destek Fiyatı</Text>
+                <TextInput
+                    style={s.input}
+                    placeholder="0.00"
+                    placeholderTextColor="#94a3b8"
+                    keyboardType="numeric"
+                    value={supportPrice}
+                    onChangeText={setSupportPrice}
+                    autoFocus
+                />
+                <View style={s.modalBtnRow}>
+                    <TouchableOpacity style={s.modalBtnCancel} onPress={() => setAddSupportVisible(false)}>
+                        <Text style={s.modalBtnCancelText}>İptal</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.modalBtnSave} onPress={handleAddSupport}>
+                        <Text style={s.modalBtnSaveText}>Ekle</Text>
+                    </TouchableOpacity>
                 </View>
-            </Modal>
+            </SwipeableModal>
         </View>
     );
 }

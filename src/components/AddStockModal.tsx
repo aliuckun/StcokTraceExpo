@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Modal, View, Text, TextInput,
     TouchableOpacity, StyleSheet, KeyboardAvoidingView,
@@ -16,28 +16,58 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
     const [symbol, setSymbol] = useState('');
     const [name, setName] = useState('');
 
-    const translateY = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(700)).current;
+    const overlayOpacity = useRef(new Animated.Value(0)).current;
+
+    // Açılış animasyonu
+    useEffect(() => {
+        if (isVisible) {
+            translateY.setValue(700);
+            overlayOpacity.setValue(0);
+            Animated.parallel([
+                Animated.timing(translateY, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(overlayOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [isVisible]);
+
+    const dismiss = () => {
+        Keyboard.dismiss();
+        Animated.parallel([
+            Animated.timing(translateY, {
+                toValue: 700,
+                duration: 250,
+                useNativeDriver: true,
+            }),
+            Animated.timing(overlayOpacity, {
+                toValue: 0,
+                duration: 250,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            onClose();
+        });
+    };
 
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onMoveShouldSetPanResponder: (_, { dy }) => dy > 5,
             onPanResponderMove: (_, { dy }) => {
-                if (dy > 0) translateY.setValue(dy); // sadece aşağı hareket
+                if (dy > 0) translateY.setValue(dy);
             },
             onPanResponderRelease: (_, { dy, vy }) => {
                 if (dy > 100 || vy > 0.5) {
-                    // Yeterince aşağı çekildi → kapat
-                    Animated.timing(translateY, {
-                        toValue: 600,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }).start(() => {
-                        translateY.setValue(0);
-                        onClose();
-                    });
+                    dismiss();
                 } else {
-                    // Yeterli değil → geri yay
                     Animated.spring(translateY, {
                         toValue: 0,
                         useNativeDriver: true,
@@ -53,24 +83,19 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
         onSave(symbol.trim(), name.trim());
         setSymbol('');
         setName('');
-        onClose();
-    };
-
-    const handleClose = () => {
-        translateY.setValue(0);
-        onClose();
+        dismiss();
     };
 
     return (
         <Modal
             visible={isVisible}
-            animationType="slide"
+            animationType="none"
             transparent
             statusBarTranslucent
-            onRequestClose={handleClose}
+            onRequestClose={dismiss}
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={s.overlay}>
+            <TouchableWithoutFeedback onPress={dismiss}>
+                <Animated.View style={[s.overlay, { opacity: overlayOpacity }]}>
                     <KeyboardAvoidingView
                         behavior="padding"
                         keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}
@@ -78,7 +103,6 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
                         <TouchableWithoutFeedback>
                             <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
 
-                                {/* Sürüklenebilir handle */}
                                 <View {...panResponder.panHandlers} style={s.handleArea}>
                                     <View style={s.handle} />
                                 </View>
@@ -108,7 +132,7 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
                                 />
 
                                 <View style={s.btnRow}>
-                                    <TouchableOpacity style={s.btnCancel} onPress={handleClose} activeOpacity={0.7}>
+                                    <TouchableOpacity style={s.btnCancel} onPress={dismiss} activeOpacity={0.7}>
                                         <Text style={s.btnCancelText}>İptal</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={s.btnSave} onPress={handleSave} activeOpacity={0.7}>
@@ -119,7 +143,7 @@ export const AddStockModal: React.FC<Props> = ({ isVisible, onClose, onSave }) =
                             </Animated.View>
                         </TouchableWithoutFeedback>
                     </KeyboardAvoidingView>
-                </View>
+                </Animated.View>
             </TouchableWithoutFeedback>
         </Modal>
     );
@@ -190,7 +214,7 @@ const s = StyleSheet.create({
         flex: 1,
         padding: 14,
         borderRadius: 10,
-        backgroundColor: '#1c1c1c',   // ← artık koyu
+        backgroundColor: '#1c1c1c',
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#2d2d2d',
@@ -201,7 +225,7 @@ const s = StyleSheet.create({
         fontSize: 15,
     },
     btnSaveText: {
-        color: '#ffffff',              // ← beyaz yazı
+        color: '#ffffff',
         fontWeight: '600',
         fontSize: 15,
     },

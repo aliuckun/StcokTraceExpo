@@ -46,7 +46,7 @@ export default function App() {
         <NavigationContainer>
             <Stack.Navigator
                 initialRouteName="Home"
-                screenOptions={{ headerShown: false }}
+                screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#1e1f21' } }}
             >
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="StockDetail" component={StockDetailScreen} />

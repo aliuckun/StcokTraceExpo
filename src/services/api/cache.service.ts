@@ -1,7 +1,7 @@
 const cache = new Map<string, { data: any; timestamp: number }>();
 
 export const TTL = {
-    PRICE: 60_000,
+    PRICE: 300_000,
     NEWS: 300_000,
     CALENDAR: 3_600_000,
     SCREENER: 300_000,

@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { LayoutAnimation } from 'react-native';
-import { useIsFocused } from '@react-navigation/native';
+import { useState, useCallback, useMemo } from 'react';
+import { LayoutAnimation, InteractionManager } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Stock } from '../types/stock';
 import { StockService } from '../services/stock/stock.service';
 import { BorsajsService } from '../services/api/borsajs.service';
 import { useStockAnimation } from './useStockAnimation';
 import { generateId } from '../utils/generateId';
 import { StorageHelper } from '../services/storage.helper';
+import { getAllStocks, saveStocks } from '../services/stock/stock.base';
 
 export const useStocks = () => {
     const [stocks, setStocks] = useState<Stock[]>([]);
@@ -15,7 +16,6 @@ export const useStocks = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<string | null>(null);
     const [bist100, setBist100] = useState<{ last: number; changePercent: number } | null>(null);
-    const isFocused = useIsFocused();
     const { animRefs, initAnim, playDeleteAnim } = useStockAnimation();
 
     const loadData = useCallback(async () => {
@@ -42,9 +42,14 @@ export const useStocks = () => {
         }
     }, []);
 
-    useEffect(() => {
-        if (isFocused) loadData();
-    }, [isFocused, loadData]);
+    useFocusEffect(
+        useCallback(() => {
+            const task = InteractionManager.runAfterInteractions(() => {
+                loadData();
+            });
+            return () => task.cancel();
+        }, [loadData])
+    );
 
     const filteredStocks = useMemo(() => {
         let result = [...stocks];
@@ -66,41 +71,59 @@ export const useStocks = () => {
         if (refreshing) return;
         setRefreshing(true);
         try {
-            const data = await StockService.getAll();
+            const data = await getAllStocks();
 
-            // BIST100 sadece bir kez çekiliyor
+            // BIST100 sadece bir kez cekiliyor
             try {
                 const bistData = await BorsajsService.getBist100();
-                setBist100({ last: bistData.last, changePercent: bistData.changePercent });
+                const bistInfo = { last: bistData.last, changePercent: bistData.changePercent };
+                setBist100(bistInfo);
+                await StorageHelper.setItem('@bist100', bistInfo);
             } catch {
                 // sessiz hata
             }
 
-            // Her hisse için fiyat çekiliyor
             const now = new Date().toLocaleTimeString('tr-TR', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
 
-            const updated = await Promise.all(
-                data.map(async stock => {
+            // Guncel hisse verilerini takip eden Map — race condition olmadan
+            const updatedMap = new Map<string, Stock>(data.map(s => [s.id, s]));
+
+            // UI'i mevcut verilerle baslat
+            setStocks([...data]);
+
+            // Her hisse icin ayri fetch baslat — geldikce aninda UI'a yansit (streaming)
+            await Promise.all(
+                data.map(async (stock) => {
                     try {
                         const priceData = await BorsajsService.refreshPrice(stock.symbol);
-                        return {
+                        const updatedStock: Stock = {
                             ...stock,
                             currentPrice: priceData.last,
                             changePercent: priceData.changePercent,
                             lastUpdated: now,
                         };
+
+                        // Map'i guncelle
+                        updatedMap.set(stock.id, updatedStock);
+
+                        // Hisse geldigi anda aninda UI'a yansit
+                        setStocks(prev =>
+                            prev.map(s => s.id === stock.id ? updatedStock : s)
+                        );
+                        setLastUpdated(now);
                     } catch {
-                        return stock;
+                        // Hata durumunda eski veri korunur
                     }
                 })
             );
 
-            await Promise.all(updated.map(s => StockService.upsert(s)));
-            setStocks(updated);
-            setLastUpdated(now);
+            // Tum hisseler tamamlandiktan sonra tek seferlik kayit (race condition yok)
+            const finalStocks = [...updatedMap.values()];
+            await saveStocks(finalStocks);
+
         } finally {
             setRefreshing(false);
         }

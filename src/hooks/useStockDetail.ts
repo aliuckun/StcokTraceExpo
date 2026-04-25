@@ -4,7 +4,6 @@ import { StockService } from '../services/stock/stock.service';
 import { TradeService } from '../services/stock/trade.service';
 import { BorsajsService } from '../services/api/borsajs.service';
 import { generateId } from '../utils/generateId';
-
 export const useStockDetail = (stockId: string) => {
     const [stock, setStock] = useState<Stock | null>(null);
     const [loading, setLoading] = useState(true);
@@ -27,6 +26,7 @@ export const useStockDetail = (stockId: string) => {
             const updated = {
                 ...stock,
                 currentPrice: priceData.last,
+                changePercent: priceData.changePercent,
                 lastUpdated: new Date().toLocaleTimeString('tr-TR', {
                     hour: '2-digit',
                     minute: '2-digit'

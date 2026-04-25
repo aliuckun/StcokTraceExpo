@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
     Modal, View, Animated, PanResponder,
     StyleSheet, TouchableWithoutFeedback, Keyboard,
@@ -11,7 +11,46 @@ interface Props {
 }
 
 export const SwipeableModal: React.FC<Props> = ({ visible, onClose, children }) => {
-    const translateY = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(700)).current;
+    const overlayOpacity = useRef(new Animated.Value(0)).current;
+
+    // Açılış animasyonu
+    useEffect(() => {
+        if (visible) {
+            translateY.setValue(700);
+            overlayOpacity.setValue(0);
+            Animated.parallel([
+                Animated.timing(translateY, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(overlayOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [visible]);
+
+    const dismiss = () => {
+        Keyboard.dismiss();
+        Animated.parallel([
+            Animated.timing(translateY, {
+                toValue: 700,
+                duration: 250,
+                useNativeDriver: true,
+            }),
+            Animated.timing(overlayOpacity, {
+                toValue: 0,
+                duration: 250,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            onClose(); // animasyon tamamen bitince kapat → flash yok
+        });
+    };
 
     const panResponder = useRef(
         PanResponder.create({
@@ -22,14 +61,7 @@ export const SwipeableModal: React.FC<Props> = ({ visible, onClose, children }) 
             },
             onPanResponderRelease: (_, { dy, vy }) => {
                 if (dy > 100 || vy > 0.5) {
-                    Animated.timing(translateY, {
-                        toValue: 700,
-                        duration: 200,
-                        useNativeDriver: true,
-                    }).start(() => {
-                        translateY.setValue(0);
-                        onClose();
-                    });
+                    dismiss();
                 } else {
                     Animated.spring(translateY, {
                         toValue: 0,
@@ -41,31 +73,25 @@ export const SwipeableModal: React.FC<Props> = ({ visible, onClose, children }) 
         })
     ).current;
 
-    const handleClose = () => {
-        translateY.setValue(0);
-        onClose();
-    };
-
     return (
         <Modal
             visible={visible}
-            animationType="slide"
+            animationType="none"  // ← yerleşik animasyon kapalı
             transparent
             statusBarTranslucent
-            onRequestClose={handleClose}
+            onRequestClose={dismiss}
         >
-            <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); handleClose(); }}>
-                <View style={s.overlay}>
+            <TouchableWithoutFeedback onPress={dismiss}>
+                <Animated.View style={[s.overlay, { opacity: overlayOpacity }]}>
                     <TouchableWithoutFeedback>
                         <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-                            {/* Sürüklenebilir handle */}
                             <View {...panResponder.panHandlers} style={s.handleArea}>
                                 <View style={s.handle} />
                             </View>
                             {children}
                         </Animated.View>
                     </TouchableWithoutFeedback>
-                </View>
+                </Animated.View>
             </TouchableWithoutFeedback>
         </Modal>
     );
