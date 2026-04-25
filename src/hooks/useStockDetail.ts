@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Stock, TradeAction, TradePlan, SupportLevel, TradeDirection } from '../types/stock';
+import { Stock, TradeAction, TradePlan, SupportLevel, TradeDirection, StockNote } from '../types/stock';
 import { StockService } from '../services/stock/stock.service';
 import { TradeService } from '../services/stock/trade.service';
 import { BorsajsService } from '../services/api/borsajs.service';
@@ -114,6 +114,25 @@ export const useStockDetail = (stockId: string) => {
         await loadData();
     };
 
+    const addNote = async (content: string): Promise<void> => {
+        if (!stock) return;
+        const newNote: StockNote = {
+            id: generateId(),
+            content: content.trim(),
+            createdAt: new Date().toISOString(),
+        };
+        const updated: Stock = { ...stock, notes: [newNote, ...stock.notes] };
+        await StockService.upsert(updated);
+        setStock(updated);
+    };
+
+    const deleteNote = async (noteId: string): Promise<void> => {
+        if (!stock) return;
+        const updated: Stock = { ...stock, notes: stock.notes.filter(n => n.id !== noteId) };
+        await StockService.upsert(updated);
+        setStock(updated);
+    };
+
     return {
         stock,
         loading,
@@ -127,6 +146,8 @@ export const useStockDetail = (stockId: string) => {
             deletePlan,
             addSupport,
             removeSupport,
+            addNote,
+            deleteNote,
             refresh: loadData,
         }
     };

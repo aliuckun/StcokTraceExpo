@@ -15,7 +15,7 @@ import { TradeAction } from '../types/stock';
 
 type RouteProps = RouteProp<RootStackParamList, 'StockDetail'>;
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'StockDetail'>;
-type Tab = 'positions' | 'supports' | 'news';
+type Tab = 'positions' | 'supports' | 'news' | 'notes';
 type FilterDir = 'ALL' | 'LONG' | 'SHORT';
 type FilterStatus = 'ALL' | 'OPEN' | 'CLOSED';
 type FilterLevel = 'ALL' | 'SUPPORT' | 'RESISTANCE';
@@ -39,6 +39,7 @@ export default function StockDetailScreen() {
     const [addSupportVisible, setAddSupportVisible] = useState(false);
     const [closeTradeVisible, setCloseTradeVisible] = useState(false);
     const [selectedTrade, setSelectedTrade] = useState<TradeAction | null>(null);
+    const [noteText, setNoteText] = useState('');
 
     const [tradeDirection, setTradeDirection] = useState<'LONG' | 'SHORT'>('LONG');
     const [tradeBuyPrice, setTradeBuyPrice] = useState('');
@@ -166,7 +167,7 @@ export default function StockDetailScreen() {
 
                 {/* SEGMENT */}
                 <View style={s.segmentWrap}>
-                    {(['positions', 'supports', 'news'] as Tab[]).map(tab => (
+                    {(['positions', 'supports', 'news', 'notes'] as Tab[]).map(tab => (
                         <TouchableOpacity
                             key={tab}
                             style={[s.seg, activeTab === tab && s.segActive]}
@@ -175,7 +176,8 @@ export default function StockDetailScreen() {
                             <Text style={[s.segText, activeTab === tab && s.segTextActive]}>
                                 {tab === 'positions' ? 'Pozisyonlar'
                                     : tab === 'supports' ? 'Destekler'
-                                        : 'Haberler'}
+                                        : tab === 'news' ? 'Haberler'
+                                            : 'Notlar'}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -547,6 +549,62 @@ export default function StockDetailScreen() {
                         ))}
                     </View>
                 )}
+
+                {/* NOTLAR */}
+                {activeTab === 'notes' && (
+                    <View>
+                        <Text style={[s.sectionLabel, { marginBottom: 12 }]}>NOTLAR</Text>
+
+                        {/* Not Giriş Alanı */}
+                        <View style={s.noteInputWrap}>
+                            <TextInput
+                                style={s.noteInput}
+                                placeholder="Görüş, plan veya hatırlatma ekle..."
+                                placeholderTextColor="rgba(255,255,255,0.3)"
+                                value={noteText}
+                                onChangeText={setNoteText}
+                                multiline
+                                numberOfLines={4}
+                                textAlignVertical="top"
+                            />
+                            <TouchableOpacity
+                                style={[s.noteAddBtn, !noteText.trim() && s.noteAddBtnDisabled]}
+                                onPress={async () => {
+                                    if (!noteText.trim()) return;
+                                    await actions.addNote(noteText);
+                                    setNoteText('');
+                                }}
+                                disabled={!noteText.trim()}
+                            >
+                                <Text style={s.noteAddBtnText}>Kaydet</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Not Listesi */}
+                        {stock.notes.length === 0 && (
+                            <Text style={s.emptyText}>Henüz not eklenmemiş.</Text>
+                        )}
+                        {stock.notes.map(note => (
+                            <View key={note.id} style={s.noteCard}>
+                                <Text style={s.noteContent}>{note.content}</Text>
+                                <View style={s.noteFooter}>
+                                    <Text style={s.noteDate}>
+                                        {new Date(note.createdAt).toLocaleDateString('tr-TR', {
+                                            day: '2-digit', month: 'short', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </Text>
+                                    <TouchableOpacity
+                                        onPress={() => actions.deleteNote(note.id)}
+                                        style={s.noteDeleteBtn}
+                                    >
+                                        <Text style={s.noteDeleteText}>Sil</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                )}
             </ScrollView>
 
             {/* İŞLEM EKLE MODAL */}
@@ -887,5 +945,74 @@ const s = StyleSheet.create({
     dirRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
 
     modalBtnRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
+
+    noteInputWrap: {
+        backgroundColor: '#1e1f21',
+        borderRadius: 12,
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.15)',
+        padding: 12,
+        marginBottom: 16,
+        gap: 10,
+    },
+    noteInput: {
+        fontSize: 14,
+        color: '#ffffff',
+        minHeight: 80,
+        lineHeight: 20,
+    },
+    noteAddBtn: {
+        alignSelf: 'flex-end',
+        paddingHorizontal: 16,
+        paddingVertical: 7,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.4)',
+    },
+    noteAddBtnDisabled: {
+        opacity: 0.35,
+    },
+    noteAddBtnText: {
+        fontSize: 13,
+        color: '#ffffff',
+        fontWeight: '500',
+    },
+    noteCard: {
+        backgroundColor: '#1e1f21',
+        borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: 'rgba(255,255,255,0.12)',
+        padding: 12,
+        marginBottom: 8,
+        gap: 8,
+    },
+    noteContent: {
+        fontSize: 14,
+        color: '#ffffff',
+        lineHeight: 20,
+    },
+    noteFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderTopWidth: 0.5,
+        borderTopColor: 'rgba(255,255,255,0.08)',
+        paddingTop: 8,
+    },
+    noteDate: {
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.45)',
+    },
+    noteDeleteBtn: {
+        paddingHorizontal: 10,
+        paddingVertical: 3,
+        borderRadius: 6,
+        backgroundColor: 'rgba(231,76,60,0.12)',
+    },
+    noteDeleteText: {
+        fontSize: 12,
+        color: '#e74c3c',
+    },
 
 });

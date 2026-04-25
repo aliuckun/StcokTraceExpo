@@ -22,7 +22,8 @@ const SwipeableStockRow: React.FC<{
     stock: Stock;
     onPress: () => void;
     onDelete: () => void;
-}> = ({ stock, onPress, onDelete }) => {
+    onToggleFavorite: () => void;
+}> = ({ stock, onPress, onDelete, onToggleFavorite }) => {
     const translateX = useRef(new Animated.Value(0)).current;
     const [swiped, setSwiped] = useState(false);
     const hasOpenPosition = stock.history.some(t => t.position === 'OPEN');
@@ -48,6 +49,16 @@ const SwipeableStockRow: React.FC<{
             <Animated.View style={[sw.row, { transform: [{ translateX }] }]} {...panResponder.panHandlers}>
                 <TouchableOpacity style={sw.rowInner} onPress={onPress} activeOpacity={0.7}>
                     <View style={[sw.indicator, hasOpenPosition && sw.indicatorActive]} />
+
+                    <TouchableOpacity
+                        onPress={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        style={sw.favBtn}
+                    >
+                        <Text style={[sw.favStar, stock.isFavorite && sw.favStarActive]}>
+                            {stock.isFavorite ? '★' : '☆'}
+                        </Text>
+                    </TouchableOpacity>
 
                     <View style={sw.symbolRow}>
                         <Text style={sw.symbol}>{stock.symbol}</Text>
@@ -233,6 +244,7 @@ export default function HomeScreen() {
                             symbol: item.symbol
                         })}
                         onDelete={() => actions.deleteStock(item.id)}
+                        onToggleFavorite={() => actions.toggleFavorite(item.id)}
                     />
                 )}
                 ListEmptyComponent={
@@ -363,7 +375,7 @@ const s = StyleSheet.create({
     },
     colLabel2: {
         fontSize: 13,
-        left: 17,
+        left: 47,
         color: 'rgba(255,255,255,1.2)',
         letterSpacing: 0.5,
         fontWeight: '600',
@@ -491,5 +503,17 @@ const sw = StyleSheet.create({
         color: '#fff',
         fontSize: 13,
         fontWeight: '500',
+    },
+    favBtn: {
+        paddingRight: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    favStar: {
+        fontSize: 18,
+        color: 'rgba(255,255,255,0.25)',
+    },
+    favStarActive: {
+        color: '#f59e0b',
     },
 });

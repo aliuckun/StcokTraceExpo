@@ -6,6 +6,12 @@ export interface SupportLevel {
     price: number;
 }
 
+export interface StockNote {
+    id: string;
+    content: string;
+    createdAt: string;
+}
+
 export interface TradePlan {
     id: string;
     stockSymbol: string;
@@ -41,4 +47,6 @@ export interface Stock {
     history: TradeAction[];
     plans: TradePlan[];
     supports: SupportLevel[];
+    notes: StockNote[];
+    isFavorite?: boolean;
 }

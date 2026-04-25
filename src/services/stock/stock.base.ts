@@ -8,6 +8,8 @@ const normalizeStock = (stock: Stock): Stock => ({
     plans: stock.plans ?? [],
     supports: stock.supports ?? [],
     history: stock.history ?? [],
+    notes: stock.notes ?? [],
+    isFavorite: stock.isFavorite ?? false,
 });
 
 export const getAllStocks = async (): Promise<Stock[]> => {

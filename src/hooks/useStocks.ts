@@ -61,9 +61,11 @@ export const useStocks = () => {
             );
         }
         return result.sort((a, b) => {
+            const aFav = a.isFavorite ? 2 : 0;
+            const bFav = b.isFavorite ? 2 : 0;
             const aHasOpen = a.history.some(t => t.position === 'OPEN') ? 1 : 0;
             const bHasOpen = b.history.some(t => t.position === 'OPEN') ? 1 : 0;
-            return bHasOpen - aHasOpen;
+            return (bFav + bHasOpen) - (aFav + aHasOpen);
         });
     }, [stocks, searchQuery]);
 
@@ -152,6 +154,14 @@ export const useStocks = () => {
         });
     };
 
+    const toggleFavorite = async (id: string): Promise<void> => {
+        const stock = stocks.find(s => s.id === id);
+        if (!stock) return;
+        const updated = { ...stock, isFavorite: !stock.isFavorite };
+        await StockService.upsert(updated);
+        setStocks(prev => prev.map(s => s.id === id ? updated : s));
+    };
+
     return {
         stocks: filteredStocks,
         searchQuery,
@@ -162,6 +172,6 @@ export const useStocks = () => {
         refreshing,
         lastUpdated,
         bist100,
-        actions: { addStock, deleteStock, refreshAllPrices }
+        actions: { addStock, deleteStock, refreshAllPrices, toggleFavorite }
     };
 };
